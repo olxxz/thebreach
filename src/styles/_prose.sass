@@ -237,9 +237,10 @@
   &:hover, &:focus-visible
     border-color: var(--gold)
 
+  // O ouro não tem contraste de texto: acende a borda e o sinal, não a palavra.
   &[data-tocando]
     border-color: var(--gold)
-    color: var(--gold)
 
     &::before
       content: '■'
+      color: var(--gold)
