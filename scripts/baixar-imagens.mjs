@@ -20,7 +20,8 @@ import path from 'node:path';
 const OWNER = process.env.BREACH_OWNER ?? 'olxxz';
 const REPO = process.env.BREACH_REPO ?? 'breach';
 const REF = process.env.BREACH_REF ?? 'main';
-const EXTENSOES = new Set(['png', 'webp', 'jpg', 'jpeg', 'avif', 'svg']);
+// Imagens e áudios (as pronúncias da Thalae) — tudo o que o site serve do acervo.
+const EXTENSOES = new Set(['png', 'webp', 'jpg', 'jpeg', 'avif', 'svg', 'mp3', 'ogg']);
 const DESTINO = path.join(process.cwd(), 'public', 'acervo');
 
 function ehImagem(caminho) {

@@ -1,7 +1,7 @@
 <!--
   Fonte do `public/apple-touch-icon.png` — o ícone que o iPhone usa ao guardar
   o site na tela inicial. Fica versionada aqui para o desenho ser rastreável: a
-  marca é o mesmo losango partido do `Sigil` e do `favicon.svg`, e mudar um sem
+  marca é o mesmo Selo do Sopro do `Sigil` e do `favicon.svg`, e mudar um sem
   os outros passaria despercebido.
 
   Três coisas o iOS impõe, e nenhuma é opcional:
@@ -10,22 +10,22 @@
     · Sem cantos arredondados nossos. Ele aplica a máscara dele por cima, e o
       nosso arredondamento apareceria como sobra nas quinas.
 
-  O losango ocupa 66% da altura da tela. Mais que isso e ele encosta na máscara
-  do iOS; menos e a marca se perde no meio do papel. E o que está centrado é o
-  desenho, não a caixa: na grade de 24 do Sigil o losango vai de 3,5 a 20,5 na
-  horizontal e de 2,5 a 21,5 na vertical, então centrar pela caixa o deixaria
-  fora do meio.
+  O selo ocupa 66% da altura da tela. Mais que isso e ele encosta na máscara
+  do iOS; menos e a marca se perde no meio do papel. Na grade de 24 do Sigil o
+  anel externo tem raio 9,6 em torno de (12, 12), então o selo vai de 2,4 a
+  21,6 nos dois eixos.
 
   Para reexportar em 180×180, com qualquer rasterizador que leia SVG:
     rsvg-convert -w 180 -h 180 scripts/icone-iphone.svg -o public/apple-touch-icon.png
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" fill="#f8f2e9"/>
-  <g transform="translate(14.97 14.97) scale(6.2526)"
-     fill="none" stroke="#8b7d5e" stroke-width="1.2"
-     stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2.5 20.5 12 12 21.5 3.5 12z"/>
-    <path d="M12 2.5 9.4 12l2.6 9.5" opacity=".55"/>
-    <path d="M12 2.5 14.6 12 12 21.5" opacity=".55"/>
+  <rect width="180" height="180" fill="#f7f2e8"/>
+  <g transform="translate(15.6 15.6) scale(6.2)"
+     fill="none" stroke="#2c4a8c" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="1.4" fill="#a07614" stroke="none"/>
+    <path d="M12 12V8.2a3.8 3.8 0 1 1-3.6 5" stroke-width="1.9"/>
+    <path d="M8.4 13.2l-2.8.9a6.8 6.8 0 1 1 12 2.3" stroke-width="1.5"/>
+    <path d="M17.6 16.4l2.3 1.5a9.6 9.6 0 0 1-15.1.5" stroke-width="1.1"/>
+    <circle cx="4.8" cy="18.4" r=".9" stroke-width="1"/>
   </g>
 </svg>

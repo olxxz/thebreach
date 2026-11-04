@@ -88,6 +88,11 @@
     text-decoration: underline
     text-decoration-thickness: 1px
     text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent)
+    transition: text-decoration-color 0.2s var(--ease)
+
+    // O ouro da iluminura só aparece no gesto: o link acende ao passar.
+    &:hover
+      text-decoration-color: var(--gold)
 
   .heading-anchor
     text-decoration: none
@@ -206,3 +211,35 @@
   --m-bg: var(--m-proposta-bg)
   --m-fg: var(--m-proposta-fg)
   --m-bd: var(--m-proposta-bd)
+
+// Botão de pronúncia: um link para um áudio no acervo vira isto.
+.pronuncia
+  display: inline-flex
+  align-items: center
+  gap: 0.35em
+  padding: 0.05em 0.65em
+  margin: 0 0.1em
+  border: 1px solid var(--border)
+  border-radius: var(--radius-pill)
+  background: var(--bg-surface)
+  color: var(--accent-ink)
+  font-family: var(--font-sans)
+  font-size: 0.78em
+  line-height: 1.6
+  vertical-align: 0.08em
+  cursor: pointer
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease)
+
+  &::before
+    content: '▶'
+    font-size: 0.75em
+
+  &:hover, &:focus-visible
+    border-color: var(--gold)
+
+  &[data-tocando]
+    border-color: var(--gold)
+    color: var(--gold)
+
+    &::before
+      content: '■'

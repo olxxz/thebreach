@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cormorant_Garamond, Fraunces, Inter, Spectral } from 'next/font/google';
 import { AppearanceProvider } from '@/components/AppearanceProvider';
 import { AppShell, type NavCategory, type NavDoc } from '@/components/AppShell';
+import { Pronuncia } from '@/components/Pronuncia';
 import type { DocNode } from '@/lib/breach/types';
 import { getCompendium, getSearchIndex } from '@/lib/breach/api';
 import { DEFAULT_NAV, DEFAULT_TOOLS, STORAGE_KEYS } from '@/lib/layouts';
@@ -58,7 +59,7 @@ export const metadata: Metadata = {
  */
 const APPEARANCE_SCRIPT = `(function(){try{var d=document.documentElement;
 var t=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.theme)});
-if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.setAttribute('data-theme','dark');}
+if(t==='sepia'||t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.setAttribute('data-theme','sepia');}
 var n=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.nav)});
 if(n==='pinned'||n==='floating'){d.setAttribute('data-nav',n);}
 var f=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.tools)});
@@ -89,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="pt-BR"
-      data-theme="light"
+      data-theme="claro"
       data-nav={DEFAULT_NAV}
       data-tools={DEFAULT_TOOLS}
       className={`${cormorant.variable} ${fraunces.variable} ${inter.variable} ${spectral.variable}`}
@@ -100,6 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <AppearanceProvider>
+          <Pronuncia />
           <AppShell nav={nav} searchRecords={searchRecords} repoUrl={compendium.source.url}>
             {children}
           </AppShell>

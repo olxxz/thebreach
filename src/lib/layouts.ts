@@ -1,7 +1,8 @@
 /** Preferências de aparência guardadas no navegador. */
 
-export type ThemeId = 'light' | 'dark';
-export const DEFAULT_THEME: ThemeId = 'light';
+/** Os dois temas são papel: o claro e o sépia, cor do papel das aquarelas. */
+export type ThemeId = 'claro' | 'sepia';
+export const DEFAULT_THEME: ThemeId = 'claro';
 
 /** Como a navegação lateral se comporta em telas largas. */
 export type NavMode = 'pinned' | 'floating';

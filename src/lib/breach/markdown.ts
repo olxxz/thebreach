@@ -21,7 +21,7 @@ import { VFile } from 'vfile';
 import type { Element, Root, RootContent } from 'hast';
 
 import { MARKERS, parseMarkerToken } from './markers';
-import { ehHeroDe, pastaDe, urlDaImagem } from './imagens';
+import { ehAudio, ehHeroDe, pastaDe, urlDaImagem } from './imagens';
 import {
   hrefForPath,
   looksLikeDocPath,
@@ -132,6 +132,19 @@ function rehypeDocLinks() {
           node.properties.target = '_blank';
           node.properties.rel = ['noreferrer', 'noopener'];
           node.properties.className = ['link-external'];
+          return;
+        }
+        // Áudio citado por caminho relativo (a pronúncia de um nome): vira um
+        // botão de ouvir. Quem toca é o componente Pronuncia, no navegador.
+        if (ehAudio(href)) {
+          const noAcervo = href.startsWith('/') ? href.slice(1) : resolverRelativo(pasta, href);
+          node.tagName = 'button';
+          node.properties = {
+            type: 'button',
+            className: ['pronuncia'],
+            'data-audio': urlDaImagem(noAcervo),
+            'aria-label': `Ouvir: ${hastToString(node).trim()}`,
+          };
           return;
         }
         // O acervo cita outro documento por caminho relativo, como cita as

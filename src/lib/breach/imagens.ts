@@ -25,6 +25,14 @@ export const NOME_HERO = 'hero';
 /** Extensões aceitas, em ordem de preferência. */
 export const EXTENSOES = ['png', 'webp', 'jpg', 'jpeg', 'avif', 'svg'] as const;
 
+/** Áudios servidos do acervo: as pronúncias da Thalae. */
+export const EXTENSOES_AUDIO = ['mp3', 'ogg'] as const;
+
+export function ehAudio(caminho: string): boolean {
+  const ext = caminho.split('?')[0].split('.').pop()?.toLowerCase();
+  return Boolean(ext && (EXTENSOES_AUDIO as readonly string[]).includes(ext));
+}
+
 export function ehImagem(caminho: string): boolean {
   const ext = caminho.split('.').pop()?.toLowerCase();
   return Boolean(ext && (EXTENSOES as readonly string[]).includes(ext));

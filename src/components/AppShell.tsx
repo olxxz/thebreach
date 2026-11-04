@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Github, Moon, PanelLeft, PanelRight, Pin, PinOff, Search as SearchIcon, Shield,
+  Github, PanelLeft, PanelRight, Pin, PinOff, ScrollText, Search as SearchIcon, Shield,
   ShieldCheck, Sun, X,
 } from 'lucide-react';
 import type { SearchRecord } from '@/lib/breach/types';
@@ -33,6 +33,7 @@ const MAIN_LINKS = [
   { href: '/compendio', label: 'Índice canônico' },
   { href: '/alteracoes', label: 'Alterações' },
   { href: '/convencoes', label: 'Convenções' },
+  { href: '/thalae', label: 'Aprender Thalae' },
 ];
 
 export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
@@ -167,11 +168,11 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
           type="button"
           className="utilrail__tool"
           onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
-          title={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
+          aria-label={theme === 'sepia' ? 'Usar tema claro' : 'Usar tema sépia'}
+          title={theme === 'sepia' ? 'Usar tema claro' : 'Usar tema sépia'}
         >
-          {theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
-          <span className="utilrail__nome">{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
+          {theme === 'sepia' ? <Sun size={18} aria-hidden="true" /> : <ScrollText size={18} aria-hidden="true" />}
+          <span className="utilrail__nome">{theme === 'sepia' ? 'Tema claro' : 'Tema sépia'}</span>
         </button>
         <button
           type="button"

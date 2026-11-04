@@ -8,9 +8,9 @@
   color-scheme: light
 
   // Papel e tinta
-  --paper-0: #ffffff
-  --paper-1: #fdfaf5
-  --paper-2: #f8f2e9
+  --paper-0: #fffdf9
+  --paper-1: #fcf9f3
+  --paper-2: #f7f2e8
   --paper-3: #f1e9dc
   --paper-4: #e7dcc9
 
@@ -30,13 +30,17 @@
   --lilac: #8f77b8
   --teal: #4d8f88
 
-  --accent: #8a5450
-  --accent-soft: #f3e5e2
-  --accent-ink: #683832
+  // Iluminura: lápis-lazúli nos links e títulos, ouro só nos momentos de luz
+  // (o ícone, o selo, o passar do mouse) — como num manuscrito iluminado.
+  --accent: #2c4a8c
+  --accent-soft: #e6ebf6
+  --accent-ink: #233d76
+  --gold: #a07614
+  --gold-soft: #f4e7c4
 
-  // Passe-partout das ilustrações. Fica claro nos dois temas de propósito:
-  // aquarela é pigmento translúcido e precisa de papel por baixo.
-  --mat: #f6f1e6
+  // Passe-partout das ilustrações. Os dois temas são papel claro, então a
+  // aquarela assenta direto no fundo e o quadro não é necessário.
+  --mat: transparent
 
   // Marcadores de confiabilidade
   --m-canonico-bg: #f7e9cd
@@ -143,64 +147,71 @@
 
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1)
 
-[data-theme='dark']
-  color-scheme: dark
+// Sépia: o segundo tema não é noite, é o papel das próprias aquarelas. A
+// tinta é translúcida e precisa de papel claro por baixo; por isso o fundo
+// mais fundo é pergaminho, e as ilustrações assentam direto nele, sem quadro.
+[data-theme='sepia']
+  color-scheme: light
 
-  --paper-0: #211d1b
-  --paper-1: #1c1917
-  --paper-2: #171412
-  --paper-3: #2a2522
-  --paper-4: #362f2a
+  --paper-0: #f3ebdb
+  --paper-1: #ece2cd
+  --paper-2: #e6d9bf
+  --paper-3: #dccdb0
+  --paper-4: #cfbd9a
 
-  --ink-1: #f0e7da
-  --ink-2: #dbd0c1
-  --ink-3: #ab9f8e
-  --ink-4: #8a7f70
+  --ink-1: #2a221a
+  --ink-2: #352b21
+  --ink-3: #574a3a
+  --ink-4: #6f604c
 
-  --line: rgba(240, 231, 218, 0.14)
-  --line-strong: rgba(240, 231, 218, 0.28)
+  --line: rgba(42, 34, 26, 0.2)
+  --line-strong: rgba(42, 34, 26, 0.4)
 
-  --sage: #97b89d
-  --rose: #dcaaaa
-  --peri: #adb6e0
-  --amber: #e2b573
-  --lilac: #c4b3dd
-  --teal: #93c2bc
+  --sage: #4f7a59
+  --rose: #9c5a59
+  --peri: #5361a6
+  --amber: #9c6f1c
+  --lilac: #765f9e
+  --teal: #3f7a73
 
-  --accent: #cfa6a0
-  --accent-soft: #322726
-  --accent-ink: #e6bdb6
+  --accent: #263f78
+  --accent-soft: #d9d8d0
+  --accent-ink: #1f3566
+  --gold: #8a6510
+  --gold-soft: #e9d7a8
 
-  --m-canonico-bg: #3a2f18
-  --m-canonico-fg: #f0d093
-  --m-canonico-bd: #6d5723
+  --mat: transparent
 
-  --m-atestado-bg: #23301f
-  --m-atestado-fg: #b6d6ba
-  --m-atestado-bd: #47603f
+  --m-canonico-bg: #efdcb0
+  --m-canonico-fg: #5e400a
+  --m-canonico-bd: #a8843a
 
-  --m-crenca-bg: #2c2438
-  --m-crenca-fg: #cebbe6
-  --m-crenca-bd: #55446e
+  --m-atestado-bg: #d3dfc9
+  --m-atestado-fg: #2f4e36
+  --m-atestado-bd: #6f9a77
 
-  --m-disputado-bg: #3a2323
-  --m-disputado-fg: #e8b4b1
-  --m-disputado-bd: #6b3f3d
+  --m-crenca-bg: #ddd2e2
+  --m-crenca-fg: #46336a
+  --m-crenca-bd: #9580b8
+
+  --m-disputado-bg: #ecd0c6
+  --m-disputado-fg: #6e3230
+  --m-disputado-bd: #bb7f78
 
   --m-lacuna-bg: transparent
-  --m-lacuna-fg: #9b8f7d
-  --m-lacuna-bd: #4e463c
+  --m-lacuna-fg: #5d5244
+  --m-lacuna-bd: #94856c
 
-  --m-proposta-bg: #1e3230
-  --m-proposta-fg: #a3d2cc
-  --m-proposta-bd: #3f625d
+  --m-proposta-bg: #cfdfd6
+  --m-proposta-fg: #22504a
+  --m-proposta-bd: #5f9e95
 
-  --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4)
-  --shadow-m: 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.35)
-  --shadow-l: 0 24px 70px rgba(0, 0, 0, 0.55)
+  --shadow-s: 0 1px 2px rgba(42, 34, 26, 0.08), 0 2px 8px rgba(42, 34, 26, 0.06)
+  --shadow-m: 0 2px 6px rgba(42, 34, 26, 0.09), 0 12px 30px rgba(42, 34, 26, 0.1)
+  --shadow-l: 0 20px 60px rgba(42, 34, 26, 0.16)
 
-  --scroll-thumb: rgba(240, 231, 218, 0.26)
-  --scroll-thumb-hover: rgba(240, 231, 218, 0.48)
+  --scroll-thumb: rgba(42, 34, 26, 0.32)
+  --scroll-thumb-hover: rgba(42, 34, 26, 0.55)
 
   --bg-app: var(--paper-2)
   --bg-surface: var(--paper-1)

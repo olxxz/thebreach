@@ -64,7 +64,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   // Alinha o estado do React com o que o script inline já aplicou no <html>.
   useEffect(() => {
     const root = document.documentElement;
-    if (root.dataset.theme === 'dark') setTheme('dark');
+    if (root.dataset.theme === 'sepia') setTheme('sepia');
     if (isNavMode(root.dataset.nav)) setNavState(root.dataset.nav);
     if (isToolsMode(root.dataset.tools)) setToolsState(root.dataset.tools);
     if (root.dataset.admin === '1') setAdmin(true);
@@ -79,7 +79,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
 
   const toggleTheme = useCallback(() => {
     setTheme((current) => {
-      const next: ThemeId = current === 'dark' ? 'light' : 'dark';
+      const next: ThemeId = current === 'sepia' ? 'claro' : 'sepia';
       document.documentElement.dataset.theme = next;
       remember(STORAGE_KEYS.theme, next);
       return next;

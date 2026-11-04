@@ -1,0 +1,139 @@
+// ---------------------------------------------------------------------------
+// Aula da Thalae: selos, botões de áudio em fila e o leitor de selos.
+// ---------------------------------------------------------------------------
+
+// Selo: tinta do tema, papel do fundo (a fratura "apaga" o traço com papel).
+.selo
+  display: block
+  width: 100%
+  height: auto
+  aspect-ratio: 1
+
+  .selo__tinta
+    stroke: var(--fg)
+    fill: none
+
+  .selo__cheio
+    fill: var(--fg)
+    stroke: none
+
+  .selo__papel
+    stroke: var(--bg-app)
+
+.aula
+  section
+    scroll-margin-top: 5rem
+    margin-top: var(--space-7)
+
+  section:first-child
+    margin-top: 0
+
+.aula__ouvir
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-2)
+
+.aula__amostras
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-5)
+  margin-block: var(--space-4)
+
+.aula__amostra
+  width: min(10rem, 42%)
+  margin: 0
+  display: grid
+  gap: var(--space-2)
+  justify-items: center
+
+  figcaption
+    font-family: var(--font-sans)
+    font-size: var(--step--2)
+    color: var(--fg-muted)
+    text-align: center
+
+// Leitor: o selo à esquerda, a leitura do anel à direita.
+.leitor, .exercicio
+  margin-block: var(--space-5) var(--space-6)
+  padding: var(--space-5)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+  background: var(--bg-surface)
+
+.leitor__escolha
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-2)
+  margin-bottom: var(--space-5)
+
+.leitor__palavra, .leitor__passo
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  padding: 0.4em 0.9em
+  border: 1px solid var(--border)
+  border-radius: var(--radius-pill)
+  background: transparent
+  color: var(--fg)
+  cursor: pointer
+
+  &[aria-pressed='true']
+    border-color: var(--accent)
+    color: var(--accent-ink)
+    box-shadow: inset 0 0 0 1px var(--accent)
+
+  &:hover:not(:disabled)
+    border-color: var(--gold)
+
+  &:disabled
+    opacity: 0.4
+    cursor: default
+
+.leitor__corpo, .exercicio
+  display: grid
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr)
+  gap: var(--space-6)
+  align-items: start
+
+.leitor__texto, .exercicio__texto
+  display: grid
+  gap: var(--space-3)
+  min-width: 0
+
+.leitor__contagem
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--fg-muted)
+
+.leitor__raiz
+  font-family: var(--font-heading)
+  font-size: var(--step-3)
+  line-height: 1.1
+  color: var(--accent-ink)
+
+  span
+    font-family: var(--font-body)
+    font-size: var(--step-0)
+    color: var(--fg-muted)
+
+.leitor__regras
+  margin: 0
+  padding-left: 1.1em
+
+.leitor__passos
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-2)
+
+.leitor__inteiro, .exercicio__resposta
+  padding-top: var(--space-3)
+  border-top: 1px solid var(--border)
+
+@media (max-width: 40rem)
+  .leitor__corpo, .exercicio
+    grid-template-columns: minmax(0, 1fr)
+
+  .leitor .selo, .exercicio .selo
+    max-width: 16rem
+    justify-self: center
