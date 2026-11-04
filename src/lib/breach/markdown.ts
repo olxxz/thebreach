@@ -30,9 +30,21 @@ import {
   withBase,
 } from './slug';
 
+/** Títulos dos documentos do acervo, pela rota do site — rótulo das referências. */
+export type Titulos = ReadonlyMap<string, string>;
+
+interface Contexto {
+  pasta?: string;
+  titulos?: Titulos;
+}
+
+function contextoDe(file: VFile): Contexto {
+  return (file.data as Contexto | undefined) ?? {};
+}
+
 /** Pasta do documento em processamento, para resolver caminhos relativos. */
 function pastaDoArquivo(file: VFile): string {
-  const pasta = (file.data as { pasta?: string } | undefined)?.pasta;
+  const { pasta } = contextoDe(file);
   return typeof pasta === 'string' ? pasta : '';
 }
 
@@ -76,6 +88,20 @@ function rehypeMarkers() {
 }
 
 /**
+ * Link cujo texto é só o caminho entre crases — `[`00-meta/X.md`](…)` — passa
+ * a mostrar o título do documento; o caminho fica no `title`.
+ */
+function rotularPeloTitulo(link: Element, titulo: string | undefined): void {
+  if (!titulo || link.children.length !== 1) return;
+  const unico = link.children[0];
+  if (unico.type !== 'element' || unico.tagName !== 'code') return;
+  const caminho = hastToString(unico).trim();
+  if (!looksLikeDocPath(caminho)) return;
+  link.children = [textNode(titulo) as Element['children'][number]];
+  link.properties.title = caminho;
+}
+
+/**
  * Referências entre documentos.
  * `<code>04-bestiario/dragoes/</code>` vira link, e links markdown para
  * documentos do acervo passam a apontar para a rota equivalente do site.
@@ -83,6 +109,7 @@ function rehypeMarkers() {
 function rehypeDocLinks() {
   return (tree: Root, file: VFile): void => {
     const pasta = pastaDoArquivo(file);
+    const { titulos } = contextoDe(file);
     visit(tree, 'element', (node: Element, indexInParent, parent) => {
       if (node.tagName === 'img') {
         const src = typeof node.properties?.src === 'string' ? node.properties.src : null;
@@ -116,6 +143,7 @@ function rehypeDocLinks() {
           const hash = href.includes('#') ? href.slice(href.indexOf('#') + 1) : '';
           node.properties.href = withBase(route) + (hash ? `#${hash}` : '');
           node.properties.className = ['link-internal'];
+          rotularPeloTitulo(node, titulos?.get(route));
         }
         return;
       }
@@ -128,11 +156,16 @@ function rehypeDocLinks() {
       const route = hrefForPath(raw);
       if (!route) return;
 
-      (parent as Element).children[indexInParent] = element(
-        'a',
-        { href: withBase(route), className: ['doc-ref'] },
-        [element('code', {}, [textNode(raw)])],
-      );
+      // Com o título conhecido, a referência se lê como texto — "As seis
+      // raças" em vez de `03-povos/seis-racas.md`; o caminho fica no `title`.
+      const titulo = titulos?.get(route);
+      (parent as Element).children[indexInParent] = titulo
+        ? element('a', { href: withBase(route), className: ['doc-ref', 'doc-ref--titulo'], title: raw }, [
+            textNode(titulo),
+          ])
+        : element('a', { href: withBase(route), className: ['doc-ref'] }, [
+            element('code', {}, [textNode(raw)]),
+          ]);
     });
   };
 }
@@ -222,14 +255,17 @@ const processor = unified()
 /**
  * `caminhoDoDocumento` é o caminho no acervo do documento de onde o markdown
  * saiu. É o que permite resolver as imagens citadas por caminho relativo.
+ * `titulos`, quando houver, troca o caminho das referências pelo título.
  */
 export async function renderMarkdown(
   markdown: string,
   caminhoDoDocumento = '',
+  titulos?: Titulos,
 ): Promise<string> {
   if (!markdown.trim()) return '';
   const entrada = new VFile({ value: markdown });
-  entrada.data = { pasta: pastaDe(caminhoDoDocumento) };
+  const contexto: Contexto = { pasta: pastaDe(caminhoDoDocumento), titulos };
+  entrada.data = contexto as VFile['data'];
   const file = await processor.process(entrada);
   return String(file);
 }

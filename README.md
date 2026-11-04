@@ -1,6 +1,6 @@
 # Compêndio Breach
 
-Representação visual do acervo em [`Lx-xz/breach`](https://github.com/Lx-xz/breach).
+Representação visual do acervo em [`olxxz/breach`](https://github.com/olxxz/breach).
 
 O repositório do acervo é tratado como **banco de dados**: o site não guarda
 cópia do conteúdo. Durante o build ele consulta a API do GitHub, lê os arquivos
@@ -37,13 +37,28 @@ Tudo em `src/lib/breach/`:
 | `markdown.ts` | Pipeline markdown → HTML com as transformações próprias. |
 | `api.ts` | Consultas usadas pelas páginas: categorias, documentos, índice, alterações, busca. |
 | `slug.ts` | Caminho no repo → rota no site. |
+| `repositorio.ts` | Dono, repositório e ramo do acervo — fonte única para o build e para o navegador. |
+| `lacunas.ts` | Lê o impacto das lacunas prioritárias e as ordena do mais alto ao mais baixo. |
+
+A casca do site (`src/components/AppShell.tsx`) só monta o leiaute. O que ela
+usa mora em módulos de uma responsabilidade cada:
+
+| Arquivo | Papel |
+|---|---|
+| `components/nav/arvore.ts` | Tipos da navegação e as funções puras da árvore (ancestrais, estado da linha). |
+| `components/nav/NavDocs.tsx` | A árvore de entidades e a chave que abre e fecha um galho. |
+| `hooks/useArvoreAberta.ts` | Quais galhos estão abertos, lembrado entre visitas. |
+| `hooks/useArrastoGavetas.ts` | As gavetas laterais que acompanham o dedo no telefone. |
+| `hooks/useAtalhos.ts` | Atalhos de teclado: busca e acesso de edição. |
 
 Três transformações fazem o acervo virar site:
 
 1. **Marcadores viram selos.** `` `[CRENÇA — Ordem dos Vigias]` `` vira um selo
    colorido com a fonte interna destacada ao lado.
-2. **Referências viram links.** `` `04-bestiario/dragoes.md` `` e os links
-   markdown para arquivos `.md` passam a apontar para a rota equivalente.
+2. **Referências viram links com o título.** `` `03-povos/seis-racas.md` `` e os
+   links markdown para arquivos `.md` passam a apontar para a rota equivalente,
+   e o leitor vê o título do documento ("As seis raças") em vez do caminho — que
+   continua no `title` do link.
 3. **Tabelas ganham rolagem própria**, para não estourar a largura da página.
 
 Seções cujo conteúdo é apenas `[LACUNA]` são reconhecidas e apresentadas como
@@ -114,7 +129,7 @@ porque tinta translúcida precisa de papel claro por baixo. Por isso, no tema
 escuro, as ilustrações do conteúdo recebem um passe-partout de papel (`--mat`),
 como uma estampa colada na página.
 
-[aquarelapy]: https://github.com/Lx-xz/aquarelapy
+[aquarelapy]: https://github.com/olxxz/aquarelapy
 
 ---
 
@@ -124,7 +139,7 @@ como uma estampa colada na página.
 npm install
 
 # Opção A — ler o acervo do GitHub (repositório privado, exige token de leitura)
-BREACH_TOKEN=<token com Contents:Read em Lx-xz/breach> npm run dev
+BREACH_TOKEN=<token com Contents:Read em olxxz/breach> npm run dev
 
 # Opção B — ler uma cópia local do acervo, sem rede
 BREACH_LOCAL_PATH=../breach npm run dev
@@ -136,7 +151,7 @@ BREACH_LOCAL_PATH=../breach npm run dev
 |---|---|---|
 | `BREACH_TOKEN` | — | Token de leitura do acervo. Obrigatório sem `BREACH_LOCAL_PATH`. |
 | `BREACH_LOCAL_PATH` | — | Pasta local com o acervo. Tem prioridade sobre a API. |
-| `BREACH_OWNER` / `BREACH_REPO` / `BREACH_REF` | `Lx-xz` / `breach` / `main` | Onde está o acervo. |
+| `BREACH_OWNER` / `BREACH_REPO` / `BREACH_REF` | `olxxz` / `breach` / `main` | Onde está o acervo. |
 | `NEXT_PUBLIC_BASE_PATH` | vazio | Prefixo da URL no GitHub Pages (`/thebreach`). |
 
 No fluxo de publicação o prefixo vem da variável de repositório `SITE_BASE_PATH`
@@ -154,7 +169,7 @@ acervo avisa que mudou.
 ### O que precisa estar configurado
 
 1. **Segredo `BREACH_TOKEN` neste repositório** — um token de acesso pessoal de
-   escopo fino com permissão `Contents: Read` em `Lx-xz/breach`. Sem ele o build
+   escopo fino com permissão `Contents: Read` em `olxxz/breach`. Sem ele o build
    para com mensagem explicando o que falta.
 2. **Pages no modo GitHub Actions** — em *Settings › Pages › Source: GitHub
    Actions*. Só à mão: criar o site do Pages exige permissão de administração

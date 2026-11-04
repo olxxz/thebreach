@@ -7,7 +7,7 @@
  */
 
 import type { BreachDoc, DocHeader, DocKind, DocRef, DocSection } from './types';
-import { renderMarkdown, toPlainText } from './markdown';
+import { renderMarkdown, toPlainText, type Titulos } from './markdown';
 import { mergeTallies, tallyMarkers } from './markers';
 import {
   deaccent,
@@ -171,7 +171,7 @@ function splitSections(lines: string[]): RawSection[] {
   return sections;
 }
 
-async function buildSection(raw: RawSection, caminho: string): Promise<DocSection> {
+async function buildSection(raw: RawSection, caminho: string, titulos?: Titulos): Promise<DocSection> {
   const markdown = raw.body.join('\n').replace(/^\s*-{3,}\s*$/gm, '').trim();
   const plain = toPlainText(markdown);
   const markers = tallyMarkers(markdown);
@@ -182,7 +182,7 @@ async function buildSection(raw: RawSection, caminho: string): Promise<DocSectio
     number: raw.number,
     title: raw.title,
     level: raw.level,
-    html: await renderMarkdown(markdown, caminho),
+    html: await renderMarkdown(markdown, caminho, titulos),
     markers,
     isGap: Boolean(markers.LACUNA) && plain.length < 4,
     children: [],
@@ -230,12 +230,38 @@ function buildExcerpt(introPlain: string, sections: DocSection[]): string {
   return `${lastStop > 90 ? cut.slice(0, lastStop + 1) : cut.trimEnd()}…`;
 }
 
-export async function parseDocument(filePath: string, markdown: string): Promise<BreachDoc> {
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+/**
+ * Legenda da ilustração de abertura: o texto alternativo da linha
+ * `![legenda](hero.png)` que segue o título (CONVENCOES.md §8).
+ */
+function heroAltFrom(preambleLines: string[]): string | null {
+  for (const line of preambleLines) {
+    const match = /^!\[([^\]]*)\]\(hero\.[a-z]+\)$/i.exec(line.trim());
+    if (match) return match[1].trim() || null;
+  }
+  return null;
+}
+
+/** Linhas do markdown, com quebras normalizadas. */
+function linhasDe(markdown: string): string[] {
+  return markdown.replace(/\r\n/g, '\n').split('\n');
+}
+
+/** Título do documento: o primeiro `# `, ou um rótulo tirado do caminho. */
+export function tituloDe(markdown: string, filePath: string): string {
+  const linha = linhasDe(markdown).find((line) => /^#\s+/.test(line));
+  return linha ? linha.replace(/^#\s+/, '').trim() : labelFromPath(filePath);
+}
+
+export async function parseDocument(
+  filePath: string,
+  markdown: string,
+  titulos?: Titulos,
+): Promise<BreachDoc> {
+  const lines = linhasDe(markdown);
 
   const titleIndex = lines.findIndex((line) => /^#\s+/.test(line));
-  const title =
-    titleIndex >= 0 ? lines[titleIndex].replace(/^#\s+/, '').trim() : labelFromPath(filePath);
+  const title = tituloDe(markdown, filePath);
 
   const afterTitle = lines.slice(titleIndex + 1);
   const firstSection = afterTitle.findIndex((line) => /^#{2,3}\s+/.test(line));
@@ -244,7 +270,9 @@ export async function parseDocument(filePath: string, markdown: string): Promise
 
   const { header, introMarkdown } = parsePreamble(preambleLines, pastaDe(filePath));
   const rawSections = splitSections(sectionLines);
-  const sections = nest(await Promise.all(rawSections.map((raw) => buildSection(raw, filePath))));
+  const sections = nest(
+    await Promise.all(rawSections.map((raw) => buildSection(raw, filePath, titulos))),
+  );
 
   const introPlain = toPlainText(introMarkdown);
   const bodyMarkdown = [introMarkdown, ...rawSections.map((s) => s.body.join('\n'))].join('\n');
@@ -266,7 +294,7 @@ export async function parseDocument(filePath: string, markdown: string): Promise
     title,
     kind: kindFor(filePath),
     header,
-    introHtml: await renderMarkdown(introMarkdown, filePath),
+    introHtml: await renderMarkdown(introMarkdown, filePath, titulos),
     sections,
     markers: mergeTallies([
       tallyMarkers(introMarkdown),
@@ -279,6 +307,7 @@ export async function parseDocument(filePath: string, markdown: string): Promise
     updatedAt: header.ultimaAtualizacao ?? header.registradaEm,
     // Preenchido em api.ts, que conhece a lista de arquivos do acervo.
     hero: null,
+    heroAlt: heroAltFrom(preambleLines),
   };
 }
 

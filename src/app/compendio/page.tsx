@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { AlertTriangle, ScrollText } from 'lucide-react';
 import { getCompendium } from '@/lib/breach/api';
+import { ordenarPorImpacto } from '@/lib/breach/lacunas';
 import { Chip, PageHead } from '@/components/content';
 
 export const metadata: Metadata = {
@@ -105,7 +106,7 @@ export default async function CompendiumPage() {
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel" id="lacunas">
         <p className="panel__title">
           <ScrollText size={13} aria-hidden="true" /> Lacunas prioritárias
         </p>
@@ -119,7 +120,7 @@ export default async function CompendiumPage() {
               </tr>
             </thead>
             <tbody>
-              {compendium.priorityGaps.map((row) => (
+              {ordenarPorImpacto(compendium.priorityGaps).map((row) => (
                 <tr key={row.lacuna}>
                   <td>{row.lacuna}</td>
                   <td>

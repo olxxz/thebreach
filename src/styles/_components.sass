@@ -142,6 +142,10 @@ a.card:hover, a.card:focus-visible
   letter-spacing: 0.14em
   color: var(--ink-4)
 
+  // Lacuna de impacto alto chama mais atenção que as demais.
+  &[data-impacto='alto']
+    color: var(--accent-ink)
+
 .card__title
   font-size: var(--step-2)
 
@@ -149,6 +153,12 @@ a.card:hover, a.card:focus-visible
   font-size: var(--step--1)
   color: var(--fg-muted)
   text-wrap: pretty
+
+.card__meta
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+  overflow-wrap: anywhere
 
 .card__foot
   margin-top: auto
@@ -315,6 +325,9 @@ a.card:hover, a.card:focus-visible
 
 .panel + .panel
   margin-top: var(--space-5)
+
+.panel__lede
+  margin-bottom: var(--space-5)
 
 .panel__title
   font-family: var(--font-sans)

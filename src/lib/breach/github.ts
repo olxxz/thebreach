@@ -3,9 +3,9 @@
  * Único lugar do lado do cliente que fala com `api.github.com`.
  */
 
-const OWNER = 'Lx-xz';
-const REPO = 'breach';
-const BRANCH = 'main';
+import { REPOSITORIO } from './repositorio';
+
+const { owner: OWNER, repo: REPO, ref: BRANCH } = REPOSITORIO;
 
 export class GithubApiError extends Error {
   constructor(

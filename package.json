@@ -2,7 +2,7 @@
   "name": "thebreach",
   "version": "0.1.0",
   "private": true,
-  "description": "Compêndio Breach — representação visual do acervo em github.com/Lx-xz/breach",
+  "description": "Compêndio Breach — representação visual do acervo em github.com/olxxz/breach",
   "scripts": {
     "dev": "npm run imagens && next dev",
     "build": "npm run imagens && next build",

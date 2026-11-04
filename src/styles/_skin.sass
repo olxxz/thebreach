@@ -393,12 +393,23 @@ a.card:hover, a.card:focus-visible
 .hero
   margin: 0 0 var(--space-6)
 
+// Quadro de proporção fixa, a do hero padrão (3:2). O que vier fora da
+// proporção cabe inteiro dentro dele, sem corte.
 .hero__art
   display: block
   width: 100%
-  max-height: min(58vh, 30rem)
   height: auto
+  aspect-ratio: 3 / 2
+  max-height: 34rem
   object-fit: contain
+
+.hero__legenda
+  margin-top: var(--space-2)
+  font-family: var(--font-body)
+  font-size: var(--step--1)
+  font-style: italic
+  color: var(--fg-muted)
+  text-align: center
 
 [data-theme='dark'] .hero__art
   background: var(--mat)

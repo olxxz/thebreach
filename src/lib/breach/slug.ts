@@ -89,7 +89,9 @@ export function podeConterEntidades(filePath: string, subtipo: string | null): b
 /** Reconhece uma referência a documento ou entidade do acervo escrita como texto. */
 export function looksLikeDocPath(value: string): boolean {
   const raw = value.trim();
-  if (/^(README|CLAUDE)\.md$/i.test(raw)) return true;
+  // Um `README.md` solto no texto é o nome genérico do arquivo, não uma
+  // referência: o acervo cita pelo caminho a partir da raiz (CONVENCOES.md §6),
+  // como cobra a conferência de referências.
   // Entidade: pasta numerada seguida de uma ou mais pastas, com barra final.
   if (/^\d{2}-[a-z-]+(?:\/[\w.-]+)*\/$/i.test(raw)) return true;
   // Documento solto: pasta numerada e um arquivo .md em qualquer profundidade.

@@ -25,8 +25,8 @@ import {
   sourceDescription,
 } from './source';
 import { ilustracaoDe } from './imagens';
-import { labelFromPath, listItemsUnder, parseDocument, tableRows } from './parse';
-import { renderMarkdown, toPlainText } from './markdown';
+import { labelFromPath, listItemsUnder, parseDocument, tableRows, tituloDe } from './parse';
+import { renderMarkdown, toPlainText, type Titulos } from './markdown';
 import { mergeTallies, tallyTotal } from './markers';
 import { hrefForPath, parseCategoryDir, slugify } from './slug';
 
@@ -118,7 +118,7 @@ function parseCanonicalIndex(markdown: string): {
   return { entries, priorityGaps, contradictions };
 }
 
-async function parseChangelog(markdown: string): Promise<ChangelogEntry[]> {
+async function parseChangelog(markdown: string, titulos: Titulos): Promise<ChangelogEntry[]> {
   const blocks = sectionBlocks(markdown);
   const entries: ChangelogEntry[] = [];
   for (const [title, body] of blocks) {
@@ -128,7 +128,7 @@ async function parseChangelog(markdown: string): Promise<ChangelogEntry[]> {
     entries.push({
       date: match[1],
       title: match[2].trim(),
-      html: await renderMarkdown(clean, `${META_DIR}/REGISTRO-DE-ALTERACOES.md`),
+      html: await renderMarkdown(clean, `${META_DIR}/REGISTRO-DE-ALTERACOES.md`, titulos),
       plain: toPlainText(clean),
     });
   }
@@ -159,6 +159,16 @@ function buildTree(entries: BreachDoc[]): DocNode[] {
   return ordenar(roots);
 }
 
+/** Título de cada documento, pela rota do site. */
+function titulosPorRota(files: string[], raws: Map<string, string>): Map<string, string> {
+  const titulos = new Map<string, string>();
+  for (const file of files) {
+    const rota = hrefForPath(file);
+    if (rota) titulos.set(rota, tituloDe(raws.get(file) ?? '', file));
+  }
+  return titulos;
+}
+
 async function build(): Promise<Compendium> {
   const todos = await listRepoFiles();
   const acervo = new Set(todos);
@@ -170,8 +180,12 @@ async function build(): Promise<Compendium> {
     }),
   );
 
+  // Os títulos saem antes de tudo, do bruto: assim cada documento já nasce com
+  // as referências aos outros rotuladas pelo título.
+  const titulos: Titulos = titulosPorRota(files, raws);
+
   const docs = await Promise.all(
-    files.map((file) => parseDocument(file, raws.get(file) as string)),
+    files.map((file) => parseDocument(file, raws.get(file) as string, titulos)),
   );
   for (const doc of docs) {
     doc.hero = ilustracaoDe(doc.path, acervo);
@@ -227,7 +241,7 @@ async function build(): Promise<Compendium> {
     categories,
     docs,
     index: entries,
-    changelog: await parseChangelog(changelogRaw),
+    changelog: await parseChangelog(changelogRaw, titulos),
     conventions: byPath.get(`${META_DIR}/CONVENCOES.md`) ?? null,
     indexDoc: byPath.get(`${META_DIR}/INDICE-CANONICO.md`) ?? null,
     readme: byPath.get('README.md') ?? null,

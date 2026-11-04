@@ -1,7 +1,7 @@
 /**
  * Modelo de dados do Compêndio Breach.
  *
- * O acervo (github.com/Lx-xz/breach) é markdown puro com convenções fixas:
+ * O acervo (github.com/olxxz/breach) é markdown puro com convenções fixas:
  * cabeçalho de metadados em negrito, seções numeradas e marcadores de
  * confiabilidade em code spans. Estes tipos são a forma estruturada disso.
  */
@@ -86,6 +86,8 @@ export interface BreachDoc {
   updatedAt: string | null;
   /** URL da ilustração de abertura, quando a entidade tiver uma. */
   hero: string | null;
+  /** Legenda da ilustração de abertura, tirada do texto alternativo. */
+  heroAlt: string | null;
 }
 
 /** Uma entidade e as entidades contidas nela — uma classe e suas espécies. */

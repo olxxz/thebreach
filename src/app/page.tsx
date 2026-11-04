@@ -11,6 +11,10 @@ import {
 } from '@/components/content';
 import { Toc, type TocItem } from '@/components/Toc';
 import { MARKERS, MARKER_ORDER } from '@/lib/breach/markers';
+import { lerImpacto, ordenarPorImpacto } from '@/lib/breach/lacunas';
+
+/** Quantas lacunas prioritárias a página inicial mostra; o resto fica no índice. */
+const LACUNAS_NA_INICIAL = 6;
 
 /**
  * Página inicial. O texto é o README da raiz do acervo, renderizado como
@@ -21,6 +25,9 @@ export default async function HomePage() {
   const compendium = await getCompendium();
   const { stats, readme } = compendium;
   const lastChange = compendium.changelog[0];
+  const lacunas = ordenarPorImpacto(compendium.priorityGaps);
+  const lacunasEmDestaque = lacunas.slice(0, LACUNAS_NA_INICIAL);
+  const contradicoes = compendium.contradictions.length;
 
   // O sumário da home mistura as seções do site com as do README do acervo, na
   // ordem em que aparecem na página.
@@ -42,7 +49,9 @@ export default async function HomePage() {
 
   return (
     <div className="stack">
-      {readme?.hero ? <Hero src={readme.hero} alt="Vista das montanhas do mundo conhecido, com um dragão em voo" /> : null}
+      {readme?.hero ? (
+        <Hero src={readme.hero} alt={readme.heroAlt ?? 'Vista das montanhas do mundo conhecido, com um dragão em voo'} />
+      ) : null}
 
       <div>
         <PageHead eyebrow="Acervo" title={readme?.title ?? 'Compêndio Breach'}>
@@ -117,7 +126,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="panel">
-              <p className="card__text" style={{ marginBottom: 'var(--space-5)' }}>
+              <p className="card__text panel__lede">
                 Toda afirmação do acervo carrega a camada de onde vem. Sem marcador, a afirmação não é
                 considerada documentada.
               </p>
@@ -128,23 +137,27 @@ export default async function HomePage() {
           <section id="lacunas">
             <div className="section-title">
               <h2>Lacunas prioritárias</h2>
-              <Link href="/compendio">
-                ver tudo <ArrowRight size={13} aria-hidden="true" />
-              </Link>
+              {lacunas.length > lacunasEmDestaque.length ? (
+                <Link href="/compendio#lacunas">
+                  ver as {lacunas.length} <ArrowRight size={13} aria-hidden="true" />
+                </Link>
+              ) : null}
             </div>
             <div className="grid">
-              {compendium.priorityGaps.map((gap) => (
-                <div className="card card--empty" key={gap.lacuna}>
-                  <span className="card__num">
-                    <ScrollText size={13} aria-hidden="true" /> impacto {gap.impacto || '—'}
-                  </span>
-                  <h3 className="card__title">{gap.lacuna}</h3>
-                  <p className="card__text">{gap.onde}</p>
-                </div>
-              ))}
-              {compendium.priorityGaps.length === 0 ? (
-                <p className="empty">Nenhuma lacuna prioritária registrada.</p>
-              ) : null}
+              {lacunasEmDestaque.map((gap) => {
+                const { nivel, detalhe } = lerImpacto(gap.impacto);
+                return (
+                  <div className="card card--empty" key={gap.lacuna}>
+                    <span className="card__num" data-impacto={nivel ?? undefined}>
+                      <ScrollText size={13} aria-hidden="true" /> impacto {nivel ?? (gap.impacto || '—')}
+                    </span>
+                    <h3 className="card__title">{gap.lacuna}</h3>
+                    {detalhe && nivel ? <p className="card__text">{detalhe}</p> : null}
+                    <p className="card__meta">{gap.onde}</p>
+                  </div>
+                );
+              })}
+              {lacunas.length === 0 ? <p className="empty">Nenhuma lacuna prioritária registrada.</p> : null}
             </div>
           </section>
 
@@ -174,9 +187,9 @@ export default async function HomePage() {
               {MARKER_ORDER.filter((id) => stats.markers[id])
                 .map((id) => `${stats.markers[id]} ${MARKERS[id].label.toLowerCase()}`)
                 .join(' · ')}
-              {compendium.contradictions.length === 0
+              {contradicoes === 0
                 ? ' — nenhuma contradição em aberto.'
-                : ` — ${compendium.contradictions.length} contradição(ões) em aberto.`}
+                : ` — ${contradicoes} ${contradicoes === 1 ? 'contradição' : 'contradições'} em aberto.`}
             </p>
           </section>
         </div>

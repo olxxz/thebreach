@@ -48,7 +48,9 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
 
   return (
     <div>
-      {doc.hero ? <Hero src={doc.hero} alt={`Ilustração — ${doc.title}`} /> : null}
+      {doc.hero ? (
+        <Hero src={doc.hero} alt={doc.heroAlt ?? `Ilustração — ${doc.title}`} caption={doc.heroAlt} />
+      ) : null}
       <Crumbs
         trail={[
           { href: '/', label: 'Compêndio' },

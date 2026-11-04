@@ -17,7 +17,7 @@ import { mkdir, rm, writeFile, readdir, copyFile, stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-const OWNER = process.env.BREACH_OWNER ?? 'Lx-xz';
+const OWNER = process.env.BREACH_OWNER ?? 'olxxz';
 const REPO = process.env.BREACH_REPO ?? 'breach';
 const REF = process.env.BREACH_REF ?? 'main';
 const EXTENSOES = new Set(['png', 'webp', 'jpg', 'jpeg', 'avif', 'svg']);

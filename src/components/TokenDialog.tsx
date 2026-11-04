@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { useAppearance } from './AppearanceProvider';
+import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
 
 interface Props {
   open: boolean;
@@ -93,7 +94,7 @@ export function TokenDialog({ open, onClose }: Props) {
               Token ativo, terminado em <code>…{token.slice(-4)}</code>
             </p>
             <p className="tokendialog__dica">
-              Vale para <code>Lx-xz/breach</code>. Sair apaga o token deste navegador.
+              Vale para <code>{NOME_REPOSITORIO}</code>. Sair apaga o token deste navegador.
             </p>
             <button
               type="button"
@@ -123,7 +124,7 @@ export function TokenDialog({ open, onClose }: Props) {
               placeholder="github_pat_…"
             />
             <p className="tokendialog__dica">
-              Fine-grained, restrito a <code>Lx-xz/breach</code>, com permissão{' '}
+              Fine-grained, restrito a <code>{NOME_REPOSITORIO}</code>, com permissão{' '}
               <code>Contents: Read and write</code>. Fica só neste navegador.
             </p>
             <button type="submit" className="tokendialog__ativar" disabled={!valor.trim()}>

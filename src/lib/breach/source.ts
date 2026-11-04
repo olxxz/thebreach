@@ -13,11 +13,12 @@
 import { readFile as fsReadFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { REPOSITORIO } from './repositorio';
 
 export const SOURCE = {
-  owner: process.env.BREACH_OWNER ?? 'Lx-xz',
-  repo: process.env.BREACH_REPO ?? 'breach',
-  ref: process.env.BREACH_REF ?? 'main',
+  owner: process.env.BREACH_OWNER ?? REPOSITORIO.owner,
+  repo: process.env.BREACH_REPO ?? REPOSITORIO.repo,
+  ref: process.env.BREACH_REF ?? REPOSITORIO.ref,
 } as const;
 
 export const REPO_URL = `https://github.com/${SOURCE.owner}/${SOURCE.repo}`;

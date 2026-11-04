@@ -14,16 +14,30 @@ import { Toc, type TocItem } from './Toc';
 
 /* --- Blocos de página ---------------------------------------------------- */
 
+/** Tamanho padrão do hero (CONVENCOES.md §8): 1536 × 1024, proporção 3:2. */
+export const HERO_LARGURA = 1536;
+export const HERO_ALTURA = 1024;
+
 /**
- * Ilustração de abertura. As aquarelas do acervo vêm com o papel removido,
- * então assentam direto sobre o fundo da página.
+ * Ilustração de abertura, num quadro de proporção fixa. Imagens fora do padrão
+ * aparecem inteiras dentro do quadro, sem corte, e a página não pula enquanto
+ * a imagem carrega.
  */
-export function Hero({ src, alt }: { src: string; alt: string }) {
+export function Hero({ src, alt, caption }: { src: string; alt: string; caption?: string | null }) {
   return (
     <figure className="hero">
       {/* Export estático: imagem simples, sem o otimizador do Next. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="hero__art" src={src} alt={alt} />
+      <img
+        className="hero__art"
+        src={src}
+        alt={alt}
+        width={HERO_LARGURA}
+        height={HERO_ALTURA}
+        decoding="async"
+        fetchPriority="high"
+      />
+      {caption ? <figcaption className="hero__legenda">{caption}</figcaption> : null}
     </figure>
   );
 }
