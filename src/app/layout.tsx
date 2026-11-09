@@ -66,6 +66,8 @@ var f=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.tools)});
 if(f==='open'||f==='closed'){d.setAttribute('data-tools',f);}
 var a=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.admin)});
 if(a==='1'){d.setAttribute('data-admin','1');}
+var l=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.leitura)});
+if(l==='canone'){d.setAttribute('data-leitura','canone');}
 }catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -102,7 +104,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <AppearanceProvider>
           <Pronuncia />
-          <AppShell nav={nav} searchRecords={searchRecords} repoUrl={compendium.source.url}>
+          <AppShell
+            nav={nav}
+            searchRecords={searchRecords}
+            eras={compendium.eras.map(({ id, titulo }) => ({ id, titulo }))}
+            repoUrl={compendium.source.url}
+            cofre={compendium.cofre}
+          >
             {children}
           </AppShell>
         </AppearanceProvider>

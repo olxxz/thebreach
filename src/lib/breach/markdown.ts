@@ -87,6 +87,35 @@ function rehypeMarkers() {
   };
 }
 
+/** Blocos que carregam uma afirmação inteira: é neles que a camada é anotada. */
+const BLOCOS_DE_AFIRMACAO = new Set(['p', 'li', 'tr', 'blockquote']);
+
+/**
+ * Anota em cada bloco a camada da afirmação — `data-camada="proposta"` — pelo
+ * primeiro marcador que ele traz. É o que deixa o modo "só o cânone" esconder
+ * propostas e lacunas sem reescrever o documento.
+ */
+function rehypeCamadas() {
+  return (tree: Root): void => {
+    const descer = (node: Root | Element, blocos: Element[]): void => {
+      for (const filho of node.children) {
+        if (filho.type !== 'element') continue;
+        const marcador = filho.properties?.['data-marker'];
+        if (typeof marcador === 'string') {
+          // O bloco mais próximo ainda sem camada: o item da lista antes da
+          // lista, o parágrafo antes da citação.
+          const bloco = [...blocos].reverse().find((b) => b.properties['data-camada'] === undefined);
+          const maisProximo = blocos[blocos.length - 1];
+          if (bloco && bloco === maisProximo) bloco.properties['data-camada'] = marcador.toLowerCase();
+          continue;
+        }
+        descer(filho, BLOCOS_DE_AFIRMACAO.has(filho.tagName) ? [...blocos, filho] : blocos);
+      }
+    };
+    descer(tree, []);
+  };
+}
+
 /**
  * Link cujo texto é só o caminho entre crases — `[`00-meta/X.md`](…)` — passa
  * a mostrar o título do documento; o caminho fica no `title`.
@@ -258,6 +287,7 @@ const processor = unified()
     properties: { className: ['heading-anchor'] },
   })
   .use(rehypeMarkers)
+  .use(rehypeCamadas)
   // Antes do rehypeDocLinks: aqui o `src` ainda é o caminho relativo do acervo.
   .use(rehypeSemHeroRepetido)
   .use(rehypeDocLinks)

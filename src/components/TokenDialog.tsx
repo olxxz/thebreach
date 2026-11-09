@@ -8,6 +8,8 @@ import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** O cofre publicado no acervo: o token cifrado pela senha do Criador. */
+  cofre?: string | null;
 }
 
 const FOCAVEIS = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';

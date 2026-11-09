@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { FileText, GitBranch, Hourglass, Link2, ScrollText } from 'lucide-react';
+import { FileText, GitBranch, Hourglass, Link2, ScrollText, Share2 } from 'lucide-react';
 import type { EraRef } from '@/lib/breach/linhaDoTempo';
 import type {
   BreachCategory,
   BreachDoc,
-  DocNode,
   DocSection,
+  NoResumo,
+  Resumo,
   MarkerTally,
 } from '@/lib/breach/types';
 import { MARKERS, MARKER_ORDER, tallyTotal } from '@/lib/breach/markers';
@@ -159,22 +160,23 @@ export function CategoryCard({ category }: { category: BreachCategory }) {
   );
 }
 
-export function DocCard({ doc, category }: { doc: BreachDoc; category?: BreachCategory }) {
+export function DocCard({ doc }: { doc: Resumo }) {
   return (
     <Link
-      className="card"
-      href={`/c/${doc.categorySlug}/${doc.slug}`}
+      className={`card${doc.capa ? ' card--figura' : ''}`}
+      href={doc.href}
       style={{ ['--card-accent' as string]: accentFor(doc.categorySlug) }}
     >
-      <span className="card__num">
-        {doc.header.subtipo ?? (doc.kind === 'narrativa' ? 'narrativa' : 'documento')}
-        {category ? ` · ${category.title}` : ''}
-      </span>
+      {doc.capa ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="card__capa" src={doc.capa} alt="" loading="lazy" decoding="async" />
+      ) : null}
+      <span className="card__num">{doc.subtipo ?? (doc.kind === 'narrativa' ? 'narrativa' : 'documento')}</span>
       <h3 className="card__title">{doc.title}</h3>
       <p className="card__text">{doc.excerpt}</p>
       <MarkerMeter tally={doc.markers} />
       <span className="card__foot">
-        {doc.header.status ? <span>{doc.header.status}</span> : null}
+        {doc.status ? <span>{doc.status}</span> : null}
         {doc.gapCount > 0 ? <span>· {doc.gapCount} lacunas</span> : null}
         {doc.updatedAt ? <span style={{ marginLeft: 'auto' }}>{doc.updatedAt}</span> : null}
       </span>
@@ -189,10 +191,10 @@ export function DocCard({ doc, category }: { doc: BreachDoc; category?: BreachCa
  * Entidades sem filhas seguem em grade, lado a lado. Uma entidade com filhas
  * abre bloco próprio, para o parentesco ficar visível.
  */
-export function DocTree({ nodes }: { nodes: DocNode[] }) {
+export function DocTree({ nodes }: { nodes: NoResumo[] }) {
   type Bloco =
-    | { tipo: 'folhas'; nodes: DocNode[] }
-    | { tipo: 'ramo'; node: DocNode };
+    | { tipo: 'folhas'; nodes: NoResumo[] }
+    | { tipo: 'ramo'; node: NoResumo };
 
   const blocos: Bloco[] = [];
   for (const node of nodes) {
@@ -334,7 +336,12 @@ export function DocArticle({
 
         {(related.length > 0 || derived.length > 0 || backlinks.length > 0) && (
           <div className="panel" style={{ marginTop: 'var(--space-7)' }}>
-            <p className="panel__title">Ligações</p>
+            <p className="panel__title">
+              Ligações
+              <Link className="panel__acao" href={`/relacoes?foco=${encodeURIComponent(doc.path)}`}>
+                <Share2 size={12} aria-hidden="true" /> ver no desenho
+              </Link>
+            </p>
             {related.length > 0 ? (
               <p className="card__text" style={{ marginBottom: 'var(--space-3)' }}>
                 <strong>Relacionados: </strong>

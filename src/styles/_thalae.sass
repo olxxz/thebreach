@@ -137,3 +137,116 @@
   .leitor .selo, .exercicio .selo
     max-width: 16rem
     justify-self: center
+
+// --- Oficina de nomes -----------------------------------------------------
+
+.oficina
+  display: grid
+  gap: var(--space-5)
+  margin-block: var(--space-5) var(--space-6)
+  padding: var(--space-5)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+
+  @media (min-width: 56rem)
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
+    align-items: start
+
+.oficina__grupo
+  margin: var(--space-3) 0 var(--space-2)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 600
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--ink-4)
+
+.oficina__lista
+  display: grid
+  gap: var(--space-2)
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr))
+
+.oficina__raiz, .oficina__elo
+  display: flex
+  flex-direction: column
+  width: 100%
+  padding: 0.35rem 0.6rem
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  background: transparent
+  color: var(--fg)
+  text-align: left
+  cursor: pointer
+
+  b
+    font-family: var(--font-heading)
+    font-size: var(--step-1)
+    font-weight: 500
+
+  span
+    font-size: var(--step--2)
+    color: var(--fg-muted)
+    line-height: 1.3
+
+  &:hover:not(:disabled)
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+
+  &:disabled
+    opacity: 0.45
+    cursor: default
+
+.oficina__elo[aria-pressed='true']
+  background: var(--accent-soft)
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border))
+
+.oficina__mesa
+  display: flex
+  flex-direction: column
+  gap: var(--space-3)
+  min-width: 0
+
+  .selo
+    width: min(100%, 17rem)
+    margin-inline: auto
+
+  @media (min-width: 56rem)
+    position: sticky
+    top: 5.5rem
+
+.oficina__vazio
+  padding: var(--space-6) var(--space-4)
+  border: 1px dashed var(--border)
+  border-radius: var(--radius-m)
+  color: var(--fg-muted)
+  text-align: center
+
+.oficina__nome
+  font-family: var(--font-heading)
+  font-size: var(--step-2)
+  font-style: italic
+  text-align: center
+  overflow-wrap: anywhere
+
+.oficina__cadeia
+  list-style: none
+  margin: 0
+  padding: 0
+  display: grid
+  gap: var(--space-2)
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr))
+  counter-reset: anel
+
+  li
+    counter-increment: anel
+
+.oficina__ajuste
+  padding: var(--space-3)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+
+  .oficina__grupo
+    margin-top: 0
+
+.oficina__nota
+  font-size: var(--step--1)
+  color: var(--fg-muted)

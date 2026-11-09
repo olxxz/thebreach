@@ -5,6 +5,8 @@ import { Toc, type TocItem } from '@/components/Toc';
 import { Selo } from '@/components/thalae/Selo';
 import { LeitorDeSelo } from '@/components/thalae/LeitorDeSelo';
 import { Exercicio } from '@/components/thalae/Exercicio';
+import { Oficina } from '@/components/thalae/Oficina';
+import { getCompendium } from '@/lib/breach/api';
 import { EXERCICIO, PALAVRAS, audioDaThalae } from '@/lib/thalae/palavras';
 import type { Raiz } from '@/lib/thalae/selo';
 
@@ -49,9 +51,11 @@ const ITENS: TocItem[] = [
   { id: 'escrita', label: 'Escrita em selo', level: 2 },
   { id: 'leitura', label: 'Ler um selo', level: 2 },
   { id: 'exercicio', label: 'Exercício', level: 2 },
+  { id: 'oficina', label: 'Oficina de nomes', level: 2 },
 ];
 
-export default function AprenderThalaePage() {
+export default async function AprenderThalaePage() {
+  const { raizes } = await getCompendium();
   return (
     <div>
       <PageHead
@@ -226,6 +230,15 @@ export default function AprenderThalaePage() {
             <p>Leia este selo sozinho antes de ver a resposta.</p>
           </section>
           <Exercicio palavra={EXERCICIO} />
+
+          <section id="oficina">
+            <h2>Oficina de nomes</h2>
+            <p>
+              Monte um nome com as raízes registradas no acervo. Toque numa raiz para juntá-la à cadeia; toque num
+              anel para dar a ele tom, som inspirado ou vogal longa. A ordem das raízes é a ordem dos anéis.
+            </p>
+          </section>
+          <Oficina raizes={raizes} />
         </article>
 
         <Toc items={ITENS} />

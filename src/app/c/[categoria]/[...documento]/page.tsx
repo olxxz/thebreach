@@ -2,12 +2,14 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
   getBacklinks, getCategories, getCategory, getCompendium, getDoc, getErasDe, getGeradoEm,
+  getVizinhosDeLeitura,
 } from '@/lib/breach/api';
 import { CAMINHO_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 import { FaixaDeEras, LinhaDoTempo } from '@/components/LinhaDoTempo';
 import { Crumbs, DocArticle, Hero, PageHead } from '@/components/content';
 import { CriarLink } from '@/components/CriarLink';
 import { EditarLink } from '@/components/EditarLink';
+import { ContinuarLeitura } from '@/components/ContinuarLeitura';
 import { Recente } from '@/components/Recente';
 import { podeConterEntidades } from '@/lib/breach/slug';
 
@@ -37,10 +39,11 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
   ]);
   if (!doc || !category) notFound();
 
-  const [backlinks, geradoEm, eras] = await Promise.all([
+  const [backlinks, geradoEm, eras, leitura] = await Promise.all([
     getBacklinks(doc.path),
     getGeradoEm(),
     getErasDe(doc.path),
+    getVizinhosDeLeitura(doc.path),
   ]);
   if (doc.path === CAMINHO_LINHA_DO_TEMPO) return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} />;
   const eyebrow = doc.header.subtipo
@@ -83,6 +86,7 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
       </PageHead>
       <Recente path={doc.path} geradoEm={geradoEm} />
       <DocArticle doc={doc} backlinks={backlinks} eras={eras} />
+      {leitura ? <ContinuarLeitura {...leitura} /> : null}
     </div>
   );
 }

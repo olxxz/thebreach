@@ -1,4 +1,6 @@
 import type { Era, EraRef } from './linhaDoTempo';
+import type { Cartao, Grafo, Ilustracao, Personagem, Reino } from './mundo';
+import type { RaizDoAcervo } from '@/lib/thalae/raizes';
 
 /**
  * Modelo de dados do Compêndio Breach.
@@ -97,6 +99,29 @@ export interface BreachDoc {
   capa: string | null;
 }
 
+/** Um documento reduzido ao que um cartão de lista mostra. */
+export interface Resumo {
+  path: string;
+  title: string;
+  href: string;
+  categorySlug: string;
+  subtipo: string | null;
+  kind: DocKind;
+  excerpt: string;
+  markers: MarkerTally;
+  status: string | null;
+  gapCount: number;
+  updatedAt: string | null;
+  capa: string | null;
+  /** Ids das eras em que o documento se passa. */
+  eras: string[];
+}
+
+export interface NoResumo {
+  doc: Resumo;
+  children: NoResumo[];
+}
+
 /** Uma entidade e as entidades contidas nela — uma classe e suas espécies. */
 export interface DocNode {
   doc: BreachDoc;
@@ -150,6 +175,10 @@ export interface SearchRecord {
   excerpt: string;
   headings: string;
   body: string;
+  /** Miniatura do documento, quando há. */
+  capa: string | null;
+  /** Ids das eras em que o documento se passa. */
+  eras: string[];
 }
 
 export interface Compendium {
@@ -167,6 +196,18 @@ export interface Compendium {
   eras: Era[];
   /** Caminho de cada documento → as eras em que ele se passa. */
   erasPorCaminho: Record<string, EraRef[]>;
+  /** Documento → os documentos que ele cita (cabeçalho e corpo). */
+  ligacoes: Record<string, string[]>;
+  reinos: Reino[];
+  personagens: Personagem[];
+  grafo: Grafo;
+  galeria: Ilustracao[];
+  /** O acervo na ordem da linha do tempo, sem repetição. */
+  leitura: Cartao[];
+  /** As raízes da Thalae listadas no acervo. */
+  raizes: RaizDoAcervo[];
+  /** O cofre do modo administrador (`00-meta/cofre.json`), quando existe. */
+  cofre: string | null;
   /** Contradições em aberto declaradas no índice canônico. */
   contradictions: Array<{ n: string; descricao: string; documentos: string; status: string }>;
   stats: {

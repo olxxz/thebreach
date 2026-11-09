@@ -1,0 +1,773 @@
+// Reinos, personagens, galeria e o desenho das relações.
+@use 'mixins' as *
+
+// --- Filtros (galeria, grafo, categoria, busca) ---------------------------
+
+.filtros
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-2)
+
+  & + &
+    margin-top: var(--space-2)
+
+.filtro
+  display: inline-flex
+  align-items: center
+  gap: var(--space-2)
+  padding: 0.3rem 0.8rem
+  border: 1px solid var(--border)
+  border-radius: var(--radius-pill)
+  background: transparent
+  color: var(--fg-muted)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  cursor: pointer
+  white-space: nowrap
+
+  &:hover
+    color: var(--fg)
+    border-color: var(--line-strong)
+
+  &[aria-pressed='true']
+    background: var(--accent-soft)
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border))
+    color: var(--accent-ink)
+
+.filtro--solto
+  margin-left: auto
+
+.filtro--cor
+  &::before
+    content: ''
+    width: 0.6rem
+    height: 0.6rem
+    border-radius: 50%
+    background: var(--card-accent, var(--accent))
+    opacity: 0.35
+
+  &[aria-pressed='true']
+    background: transparent
+    color: var(--fg)
+    border-color: color-mix(in srgb, var(--card-accent) 60%, var(--border))
+
+    &::before
+      opacity: 1
+
+// --- Figuras e retratos ---------------------------------------------------
+
+.figuras
+  display: grid
+  gap: var(--space-3)
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr))
+
+.figura
+  display: flex
+  align-items: center
+  gap: var(--space-3)
+  padding: var(--space-2)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  color: inherit
+  text-decoration: none
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease)
+
+  &:hover, &:focus-visible
+    border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 60%, var(--border))
+    transform: translateY(-1px)
+
+.figura__img
+  flex: none
+  width: 4.2rem
+  height: 2.8rem
+  object-fit: contain
+  border-radius: var(--radius-s)
+
+.figura__img--vazia
+  display: grid
+  place-items: center
+  color: var(--ink-4)
+  background: var(--paper-2)
+
+.figura__texto
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.figura__nome
+  font-family: var(--font-heading)
+  font-size: var(--step-0)
+  line-height: 1.25
+  color: var(--fg)
+
+.figura__papel
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+// Uma fileira de retratos lado a lado; no celular ela rola de lado.
+.fileira
+  display: flex
+  gap: var(--space-4)
+  overflow-x: auto
+  padding-bottom: var(--space-2)
+  scroll-snap-type: x proximity
+  --retrato-w: clamp(8.5rem, 22vw, 11rem)
+
+.fileira--grande
+  --retrato-w: clamp(10.5rem, 28vw, 15rem)
+
+.retrato
+  flex: none
+  width: var(--retrato-w)
+  display: flex
+  flex-direction: column
+  gap: var(--space-1)
+  color: inherit
+  text-decoration: none
+  scroll-snap-align: start
+
+  &:hover .retrato__quadro, &:focus-visible .retrato__quadro
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+    transform: translateY(-3px)
+    box-shadow: var(--shadow-m)
+
+.retrato__quadro
+  display: block
+  aspect-ratio: 3 / 4
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+  overflow: hidden
+  background: color-mix(in srgb, var(--paper-2) 60%, transparent)
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease)
+
+  img
+    width: 100%
+    height: 100%
+    // As ilustrações são paisagem com a figura no centro: o corte em retrato
+    // aproxima a figura e tira o vazio dos lados.
+    object-fit: cover
+    object-position: center
+
+.retrato__vazio
+  display: grid
+  place-items: center
+  height: 100%
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+.retrato__nome
+  margin-top: var(--space-2)
+  font-family: var(--font-heading)
+  font-size: var(--step-1)
+  line-height: 1.2
+  color: var(--fg)
+
+.retrato__papel
+  font-size: var(--step--2)
+  letter-spacing: 0.08em
+  text-transform: uppercase
+  color: var(--ink-4)
+
+// --- Reinos ---------------------------------------------------------------
+
+.reino
+  display: grid
+  gap: var(--space-5)
+  padding-top: var(--space-6)
+  border-top: 1px solid var(--border)
+  scroll-margin-top: 5rem
+
+  @include from(64rem)
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr)
+    gap: var(--space-7)
+    align-items: start
+
+.reino__capa
+  display: block
+
+  @include from(64rem)
+    position: sticky
+    top: 5.5rem
+
+  img
+    width: 100%
+    height: auto
+    aspect-ratio: 3 / 2
+    object-fit: contain
+
+.reino__corpo
+  display: flex
+  flex-direction: column
+  gap: var(--space-5)
+  min-width: 0
+
+.reino__cabeca .pagehead__eyebrow
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: var(--space-2)
+
+.reino__titulo
+  font-size: var(--step-4)
+  line-height: 1.05
+
+  a
+    color: inherit
+    text-decoration: none
+
+.reino__texto
+  margin-top: var(--space-3)
+  max-width: var(--measure)
+  color: var(--fg-muted)
+  text-wrap: pretty
+
+.reino__abrir
+  display: inline-flex
+  align-items: center
+  gap: var(--space-1)
+  margin-top: var(--space-3)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  color: var(--accent-ink)
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+.reino__rotulo
+  margin-bottom: var(--space-3)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 600
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--ink-4)
+
+// --- Galeria --------------------------------------------------------------
+
+.galeria__conta
+  margin: var(--space-4) 0
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+.galeria__grade
+  list-style: none
+  margin: 0
+  padding: 0
+  display: grid
+  gap: var(--space-4)
+  grid-template-columns: repeat(auto-fill, minmax(min(46%, 15rem), 1fr))
+
+.galeria__item
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+  width: 100%
+  padding: var(--space-2)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  background: transparent
+  color: inherit
+  cursor: zoom-in
+  text-align: left
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease)
+
+  &:hover, &:focus-visible
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+    transform: translateY(-2px)
+    box-shadow: var(--shadow-m)
+
+  img
+    width: 100%
+    aspect-ratio: 3 / 2
+    object-fit: contain
+
+.galeria__legenda
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  color: var(--fg-muted)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.luz
+  position: fixed
+  inset: 0
+  z-index: 80
+  display: grid
+  grid-template-columns: auto minmax(0, 1fr) auto
+  align-items: center
+  gap: var(--space-2)
+  padding: var(--space-4)
+  background: color-mix(in srgb, var(--paper-1) 94%, transparent)
+  backdrop-filter: blur(6px)
+
+.luz__figura
+  margin: 0
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: var(--space-3)
+  min-width: 0
+
+  img
+    max-width: 100%
+    max-height: calc(100dvh - 8rem)
+    object-fit: contain
+
+  figcaption
+    display: flex
+    flex-wrap: wrap
+    justify-content: center
+    gap: var(--space-2) var(--space-4)
+    font-size: var(--step--1)
+    color: var(--fg-muted)
+    text-align: center
+
+    a
+      display: inline-flex
+      align-items: center
+      gap: var(--space-1)
+      color: var(--accent-ink)
+
+.luz__fechar, .luz__passo
+  display: grid
+  place-items: center
+  width: 2.6rem
+  height: 2.6rem
+  border: 1px solid var(--border)
+  border-radius: 50%
+  background: var(--paper-1)
+  color: var(--fg)
+  cursor: pointer
+
+  &:hover
+    border-color: var(--line-strong)
+
+.luz__fechar
+  position: absolute
+  top: var(--space-4)
+  right: var(--space-4)
+
+// --- Relações -------------------------------------------------------------
+
+.grafo
+  display: flex
+  flex-direction: column
+  gap: var(--space-3)
+
+.grafo__bancada
+  display: grid
+  gap: var(--space-5)
+  margin-top: var(--space-3)
+
+  @include from(64rem)
+    grid-template-columns: minmax(0, 1fr) 17rem
+    align-items: start
+
+.grafo__quadro
+  position: relative
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+  overflow: hidden
+
+  > svg
+    display: block
+    width: 100%
+    height: auto
+    min-height: 22rem
+    touch-action: none
+    cursor: grab
+    user-select: none
+
+    &:active
+      cursor: grabbing
+
+.grafo__aresta
+  stroke: var(--line-strong)
+  opacity: 0.55
+  transition: opacity 0.2s
+
+  &[data-forte='true']
+    stroke: var(--accent)
+    opacity: 1
+
+  &[data-apagada='true']
+    opacity: 0.1
+
+.grafo__no
+  cursor: pointer
+  transition: opacity 0.2s
+
+  circle
+    stroke: var(--paper-1)
+    stroke-width: 1.5
+    vector-effect: non-scaling-stroke
+
+  text
+    font-family: var(--font-sans)
+    fill: var(--fg)
+    paint-order: stroke
+    stroke: var(--paper-1)
+    stroke-width: 3px
+    vector-effect: non-scaling-stroke
+    pointer-events: none
+
+  &[data-apagado='true']
+    opacity: 0.18
+
+  &[data-atual='true'] circle
+    stroke: var(--fg)
+    stroke-width: 2.5
+
+.grafo__zoom
+  position: absolute
+  right: var(--space-3)
+  bottom: var(--space-3)
+  display: flex
+  flex-direction: column
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  background: var(--paper-1)
+  overflow: hidden
+
+  button
+    display: grid
+    place-items: center
+    width: 2.2rem
+    height: 2.2rem
+    border: 0
+    background: transparent
+    color: var(--fg-muted)
+    cursor: pointer
+
+    & + button
+      border-top: 1px solid var(--border)
+
+    &:hover
+      color: var(--fg)
+      background: var(--paper-2)
+
+.grafo__painel
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+  min-width: 0
+
+.grafo__capa
+  width: 100%
+  aspect-ratio: 3 / 2
+  object-fit: contain
+
+.grafo__titulo
+  font-size: var(--step-2)
+
+.grafo__dica
+  font-size: var(--step--1)
+  color: var(--fg-muted)
+  text-wrap: pretty
+
+.grafo__rotulo
+  margin-top: var(--space-4)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 600
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--ink-4)
+
+.grafo__lista
+  list-style: none
+  margin: 0
+  padding: 0
+
+  button
+    display: flex
+    align-items: center
+    gap: var(--space-2)
+    width: 100%
+    padding: 0.3rem 0
+    border: 0
+    background: transparent
+    color: var(--fg)
+    font-family: var(--font-body)
+    font-size: var(--step--1)
+    text-align: left
+    cursor: pointer
+
+    &:hover
+      color: var(--accent-ink)
+
+.grafo__ponto
+  flex: none
+  width: 0.6rem
+  height: 0.6rem
+  border-radius: 50%
+
+.grafo__grau
+  margin-left: auto
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+// --- Filtro por era e cartão com figura -----------------------------------
+
+.filtros--era
+  align-items: center
+  margin-bottom: var(--space-5)
+
+.filtros__rotulo
+  display: inline-flex
+  align-items: center
+  gap: var(--space-1)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 600
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--ink-4)
+  margin-right: var(--space-1)
+
+.card__capa
+  width: 100%
+  aspect-ratio: 3 / 2
+  object-fit: contain
+  margin-bottom: var(--space-1)
+
+// --- Navegação com ícone --------------------------------------------------
+
+.railnav__item--icone
+  display: flex
+  align-items: center
+  gap: var(--space-3)
+  padding-left: var(--space-2)
+
+  svg
+    flex: none
+    color: var(--ink-4)
+
+.railnav__linha[data-estado='atual'] .railnav__item--icone svg
+  color: var(--accent-ink)
+
+// --- Só o cânone ----------------------------------------------------------
+// As propostas e as lacunas saem da leitura; o documento continua o mesmo.
+
+html[data-leitura='canone']
+  [data-camada='proposta'],
+  [data-camada='lacuna'],
+  .section--gap,
+  .section__sub:has(> .gapnote)
+    display: none
+
+  // Lista ou tabela em que nada sobrou some junto.
+  .prose ul:not(:has(> li:not([data-camada='proposta'], [data-camada='lacuna']))),
+  .prose ol:not(:has(> li:not([data-camada='proposta'], [data-camada='lacuna']))),
+  .md-table:not(:has(tbody tr:not([data-camada='proposta'], [data-camada='lacuna'])))
+    display: none
+
+.tool--canone
+  display: inline-flex
+  align-items: center
+  gap: var(--space-2)
+  width: auto
+  padding: 0 var(--space-3)
+  border: 1px solid var(--m-canonico-bd)
+  border-radius: var(--radius-pill)
+  background: var(--m-canonico-bg)
+  color: var(--m-canonico-fg)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  white-space: nowrap
+
+  @include until(34rem)
+    span
+      @include visually-hidden
+
+// --- Barra inferior do celular --------------------------------------------
+
+.barra
+  display: none
+
+@include until(48rem)
+  .barra
+    position: fixed
+    inset: auto 0 0 0
+    z-index: 40
+    display: grid
+    grid-template-columns: repeat(5, 1fr)
+    padding-bottom: env(safe-area-inset-bottom)
+    border-top: 1px solid var(--border)
+    background: color-mix(in srgb, var(--paper-1) 94%, transparent)
+    backdrop-filter: blur(10px)
+
+  .barra__item
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 2px
+    padding: 0.5rem 0 0.4rem
+    border: 0
+    background: transparent
+    color: var(--fg-muted)
+    font-family: var(--font-sans)
+    font-size: 0.66rem
+    text-decoration: none
+    cursor: pointer
+
+    &[aria-current='page']
+      color: var(--accent-ink)
+
+  .barra__item--busca svg
+    color: var(--accent-ink)
+
+  // O rodapé e o conteúdo não podem ficar atrás da barra.
+  .colophon
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom))
+
+// --- Continuar a leitura --------------------------------------------------
+
+.continuar
+  display: grid
+  gap: var(--space-3)
+  margin-top: var(--space-7)
+  padding-top: var(--space-5)
+  border-top: 1px solid var(--border)
+
+  @include from(40rem)
+    grid-template-columns: 1fr 1fr
+
+.continuar__rotulo
+  grid-column: 1 / -1
+  display: flex
+  align-items: center
+  gap: var(--space-2)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 600
+  letter-spacing: 0.12em
+  text-transform: uppercase
+  color: var(--ink-4)
+
+  a
+    margin-left: auto
+    font-weight: 400
+    letter-spacing: 0
+    text-transform: none
+    color: var(--fg-muted)
+
+.continuar__passo
+  display: flex
+  align-items: center
+  gap: var(--space-3)
+  padding: var(--space-3)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  color: inherit
+  text-decoration: none
+  min-width: 0
+
+  &:hover, &:focus-visible
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+
+  img
+    flex: none
+    width: 4.5rem
+    height: 3rem
+    object-fit: contain
+
+.continuar__passo--depois
+  flex-direction: row-reverse
+  text-align: right
+
+  @include from(40rem)
+    grid-column: 2
+
+.continuar__texto
+  display: flex
+  flex-direction: column
+  min-width: 0
+  flex: 1
+
+.continuar__sentido
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+.continuar__titulo
+  font-family: var(--font-heading)
+  font-size: var(--step-1)
+  line-height: 1.2
+
+.panel__acao
+  display: inline-flex
+  align-items: center
+  gap: var(--space-1)
+  margin-left: var(--space-3)
+  font-weight: 400
+  letter-spacing: 0
+  text-transform: none
+  color: var(--fg-muted)
+  text-decoration: none
+
+  &:hover
+    color: var(--accent-ink)
+
+// --- Reinos na página inicial ---------------------------------------------
+
+.vitrine
+  display: grid
+  gap: var(--space-4)
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr))
+
+.vitrine__item
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+  padding: var(--space-3)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+  color: inherit
+  text-decoration: none
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease)
+
+  &:hover, &:focus-visible
+    transform: translateY(-2px)
+    box-shadow: var(--shadow-m)
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+
+  img
+    width: 100%
+    aspect-ratio: 3 / 2
+    object-fit: contain
+
+.vitrine__nome
+  font-family: var(--font-heading)
+  font-size: var(--step-2)
+  line-height: 1.1
+
+.vitrine__era
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+.atalhos
+  display: flex
+  flex-wrap: wrap
+  gap: var(--space-2)
+
+  a
+    display: inline-flex
+    align-items: center
+    gap: var(--space-2)
+    padding: 0.4rem 0.9rem
+    border: 1px solid var(--border)
+    border-radius: var(--radius-pill)
+    color: var(--fg-muted)
+    font-family: var(--font-sans)
+    font-size: var(--step--1)
+    text-decoration: none
+
+    &:hover, &:focus-visible
+      color: var(--fg)
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--border))

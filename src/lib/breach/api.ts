@@ -13,6 +13,7 @@ import type {
   Compendium,
   DocNode,
   IndexEntry,
+  NoResumo,
   SearchRecord,
 } from './types';
 import {
@@ -31,6 +32,12 @@ import { mergeTallies, tallyTotal } from './markers';
 import { hrefForPath, parseCategoryDir, slugify } from './slug';
 import { CAMINHO_LINHA_DO_TEMPO, erasPorDocumento, lerLinhaDoTempo } from './linhaDoTempo';
 import type { EraRef } from './linhaDoTempo';
+import type { Cartao } from './mundo';
+import {
+  cartaoDe, definirOrdemDasEras, montarGaleria, montarGrafo, montarPersonagens, montarReinos,
+  referenciasDe,
+} from './mundo';
+import { lerRaizes } from '@/lib/thalae/raizes';
 
 /** Arquivos que não viram página. O README da raiz vira a página inicial. */
 const EXCLUDED = new Set(['CLAUDE.md']);
@@ -251,6 +258,27 @@ async function build(): Promise<Compendium> {
   const { entries, priorityGaps, contradictions } = parseCanonicalIndex(indexRaw);
   const eras = await lerLinhaDoTempo(raws.get(CAMINHO_LINHA_DO_TEMPO) ?? '', titulos);
 
+  const erasPorCaminho = Object.fromEntries(erasPorDocumento(eras));
+  definirOrdemDasEras(eras.map((era) => era.id));
+
+  const existentes = new Set(docs.map((doc) => doc.path));
+  const ligacoes: Record<string, string[]> = {};
+  for (const doc of docs) {
+    if (doc.kind === 'meta') continue;
+    ligacoes[doc.path] = referenciasDe(doc.path, raws.get(doc.path) ?? '', existentes);
+  }
+
+  // A ordem de leitura: os documentos das eras, na ordem em que a linha do
+  // tempo os lista, cada um só na primeira era em que aparece.
+  const leitura = [...new Set(eras.flatMap((era) => era.documentos))]
+    .map((caminho) => byPath.get(caminho))
+    .filter((doc): doc is BreachDoc => Boolean(doc) && (doc as BreachDoc).kind === 'entrada')
+    .map(cartaoDe);
+
+  const cofre = acervo.has(`${META_DIR}/cofre.json`)
+    ? await readMarkdown(`${META_DIR}/cofre.json`).catch(() => null)
+    : null;
+
   const entryDocs = docs.filter((doc) => doc.kind === 'entrada' || doc.kind === 'narrativa');
   const dates = docs.map((doc) => doc.updatedAt).filter((date): date is string => Boolean(date));
 
@@ -264,7 +292,15 @@ async function build(): Promise<Compendium> {
     readme: byPath.get('README.md') ?? null,
     priorityGaps,
     eras,
-    erasPorCaminho: Object.fromEntries(erasPorDocumento(eras)),
+    erasPorCaminho,
+    ligacoes,
+    reinos: montarReinos(docs, ligacoes, erasPorCaminho),
+    personagens: montarPersonagens(docs, ligacoes, erasPorCaminho),
+    grafo: montarGrafo(docs, ligacoes, erasPorCaminho),
+    galeria: montarGaleria(todos, docs, raws),
+    leitura,
+    raizes: lerRaizes(raws.get('01-cosmologia/thalae/README.md') ?? ''),
+    cofre,
     contradictions,
     stats: {
       docs: entryDocs.length,
@@ -320,6 +356,38 @@ export async function getDoc(categorySlug: string, docSlug: string): Promise<Bre
   );
 }
 
+/** A árvore de uma categoria, reduzida ao que os cartões mostram. */
+export async function getResumos(nodes: DocNode[]): Promise<NoResumo[]> {
+  const { erasPorCaminho } = await getCompendium();
+  const reduzir = (node: DocNode): NoResumo => ({
+    doc: {
+      path: node.doc.path,
+      title: node.doc.title,
+      href: `/c/${node.doc.categorySlug}/${node.doc.slug}`,
+      categorySlug: node.doc.categorySlug,
+      subtipo: node.doc.header.subtipo,
+      kind: node.doc.kind,
+      excerpt: node.doc.excerpt,
+      markers: node.doc.markers,
+      status: node.doc.header.status,
+      gapCount: node.doc.gapCount,
+      updatedAt: node.doc.updatedAt,
+      capa: node.doc.capa,
+      eras: (erasPorCaminho[node.doc.path] ?? []).map((era) => era.id),
+    },
+    children: node.children.map(reduzir),
+  });
+  return nodes.map(reduzir);
+}
+
+/** O documento anterior e o seguinte na ordem da linha do tempo. */
+export async function getVizinhosDeLeitura(path: string): Promise<{ antes: Cartao | null; depois: Cartao | null; posicao: number; total: number } | null> {
+  const { leitura } = await getCompendium();
+  const i = leitura.findIndex((item) => item.path === path);
+  if (i === -1) return null;
+  return { antes: leitura[i - 1] ?? null, depois: leitura[i + 1] ?? null, posicao: i + 1, total: leitura.length };
+}
+
 /** Documentos que citam um dado documento — retrolinks. */
 /** As eras em que um documento se passa, segundo a linha do tempo. */
 export async function getErasDe(path: string): Promise<EraRef[]> {
@@ -342,6 +410,7 @@ export async function getBacklinks(path: string): Promise<BreachDoc[]> {
 export async function getSearchIndex(): Promise<SearchRecord[]> {
   const compendium = await getCompendium();
   const records: SearchRecord[] = [];
+  const erasDe = (path: string): string[] => (compendium.erasPorCaminho[path] ?? []).map((era) => era.id);
 
   for (const category of compendium.categories) {
     records.push({
@@ -352,6 +421,8 @@ export async function getSearchIndex(): Promise<SearchRecord[]> {
       excerpt: category.description,
       headings: category.docs.map((doc) => doc.title).join(' · '),
       body: category.gaps.join(' '),
+      capa: category.hero,
+      eras: [],
     });
     for (const doc of category.docs) {
       records.push({
@@ -362,6 +433,8 @@ export async function getSearchIndex(): Promise<SearchRecord[]> {
         excerpt: doc.excerpt,
         headings: doc.sections.map((section) => section.title).join(' · '),
         body: doc.plain.slice(0, 4000),
+        capa: doc.capa,
+        eras: erasDe(doc.path),
       });
     }
   }
@@ -377,6 +450,8 @@ export async function getSearchIndex(): Promise<SearchRecord[]> {
       excerpt: doc.excerpt,
       headings: doc.sections.map((section) => section.title).join(' · '),
       body: doc.plain.slice(0, 4000),
+      capa: null,
+      eras: [],
     });
   }
 

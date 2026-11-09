@@ -17,6 +17,8 @@ export const STORAGE_KEYS = {
   nav: 'breach:nav',
   tools: 'breach:tools',
   admin: 'breach:admin',
+  /** `canone`: propostas e lacunas ficam fora da leitura. */
+  leitura: 'breach:leitura',
   token: 'breach:gh-token',
   /** Prefixo: a chave de cada rascunho leva o caminho do documento no fim. */
   rascunho: 'breach:rascunho',

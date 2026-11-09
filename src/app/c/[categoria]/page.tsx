@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { FolderOpen, ScrollText } from 'lucide-react';
-import { getCategories, getCategory } from '@/lib/breach/api';
-import { Chip, Crumbs, DocTree, Hero, PageHead } from '@/components/content';
+import { getCategories, getCategory, getCompendium, getResumos } from '@/lib/breach/api';
+import { ListaDeDocumentos } from '@/components/ListaDeDocumentos';
+import { Chip, Crumbs, Hero, PageHead } from '@/components/content';
 import { CriarLink } from '@/components/CriarLink';
 import { EditarLink } from '@/components/EditarLink';
 
@@ -24,6 +25,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const { categoria } = await params;
   const category = await getCategory(categoria);
   if (!category) notFound();
+  const [resumos, { eras }] = await Promise.all([getResumos(category.tree), getCompendium()]);
 
   return (
     <div className="stack">
@@ -54,7 +56,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
           <h2>Documentos</h2>
         </div>
         {category.docs.length > 0 ? (
-          <DocTree nodes={category.tree} />
+          <ListaDeDocumentos nodes={resumos} eras={eras.map(({ id, titulo }) => ({ id, titulo }))} />
         ) : (
           <p className="empty">
             Categoria ainda vazia. Nenhum documento foi aberto aqui — nada é inventado para preencher.

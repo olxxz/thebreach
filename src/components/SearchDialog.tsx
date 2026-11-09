@@ -8,6 +8,7 @@ import type { SearchRecord } from '@/lib/breach/types';
 
 interface Props {
   records: SearchRecord[];
+  eras: Array<{ id: string; titulo: string }>;
   open: boolean;
   onClose: () => void;
 }
@@ -16,10 +17,11 @@ interface Props {
  * Busca client-side sobre o índice gerado no build. O acervo é pequeno; o
  * índice inteiro viaja com a página e a busca é instantânea, sem servidor.
  */
-export function SearchDialog({ records, open, onClose }: Props) {
+export function SearchDialog({ records, eras, open, onClose }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
+  const [era, setEra] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listaRef = useRef<HTMLUListElement>(null);
   // O mouse também move o cursor; rolar por causa dele faria a lista fugir
@@ -46,15 +48,20 @@ export function SearchDialog({ records, open, onClose }: Props) {
 
   const results = useMemo(() => {
     const term = query.trim();
-    if (!term) return records.slice(0, 8);
-    return fuse.search(term, { limit: 12 }).map((hit) => hit.item);
-  }, [fuse, query, records]);
+    const daEra = (record: SearchRecord): boolean => !era || record.eras.includes(era);
+    if (!term) return records.filter(daEra).slice(0, era ? 40 : 8);
+    return fuse
+      .search(term, { limit: era ? 60 : 12 })
+      .map((hit) => hit.item)
+      .filter(daEra)
+      .slice(0, 12);
+  }, [fuse, query, records, era]);
 
   useEffect(() => {
     setCursor(0);
     viaTeclado.current = false;
     if (listaRef.current) listaRef.current.scrollTop = 0;
-  }, [query]);
+  }, [query, era]);
 
   // Andar com as setas tem de trazer o resultado destacado para dentro da
   // lista; sem isto o cursor desce sozinho e some por baixo da borda.
@@ -142,8 +149,30 @@ export function SearchDialog({ records, open, onClose }: Props) {
           ) : null}
         </div>
 
+        {eras.length > 0 ? (
+          <div className="filtros searchdialog__eras" role="group" aria-label="Filtrar por era">
+            <button type="button" className="filtro" aria-pressed={era === null} onClick={() => setEra(null)}>
+              Todas as eras
+            </button>
+            {eras.map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                className="filtro"
+                aria-pressed={era === e.id}
+                onClick={() => setEra(era === e.id ? null : e.id)}
+              >
+                {e.titulo}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {results.length === 0 ? (
-          <p className="searchdialog__foot">Nada no acervo corresponde a “{query}”.</p>
+          <p className="searchdialog__foot">
+            {query ? `Nada no acervo corresponde a “${query}”` : 'Nenhum documento'}
+            {era ? ' nesta era' : ''}.
+          </p>
         ) : (
           <ul className="searchdialog__results" ref={listaRef}>
             {results.map((record, index) => (
@@ -158,14 +187,22 @@ export function SearchDialog({ records, open, onClose }: Props) {
                     go(record.href);
                   }}
                 >
-                  <span className="searchresult__top">
-                    <span className="searchresult__title">{record.title}</span>
-                    <span className="searchresult__cat">
-                      {record.categoria}
-                      {record.subtipo ? ` · ${record.subtipo}` : ''}
+                  {record.capa ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="searchresult__capa" src={record.capa} alt="" loading="lazy" />
+                  ) : (
+                    <span className="searchresult__capa" aria-hidden="true" />
+                  )}
+                  <span className="searchresult__corpo">
+                    <span className="searchresult__top">
+                      <span className="searchresult__title">{record.title}</span>
+                      <span className="searchresult__cat">
+                        {record.categoria}
+                        {record.subtipo ? ` · ${record.subtipo}` : ''}
+                      </span>
                     </span>
+                    {record.excerpt ? <span className="searchresult__text">{record.excerpt}</span> : null}
                   </span>
-                  {record.excerpt ? <span className="searchresult__text">{record.excerpt}</span> : null}
                 </a>
               </li>
             ))}

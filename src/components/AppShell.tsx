@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Github, PanelLeft, PanelRight, Pin, PinOff, ScrollText, Search as SearchIcon, Shield,
-  ShieldCheck, Sun, X,
+  BookOpen, Castle, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
+  PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2, Shield, ShieldCheck,
+  Stamp, Sun, Users, X,
 } from 'lucide-react';
 import type { SearchRecord } from '@/lib/breach/types';
 import { LARGO, useMedia } from '@/lib/media';
@@ -26,22 +27,37 @@ export type { NavCategory, NavDoc };
 interface Props {
   nav: NavCategory[];
   searchRecords: SearchRecord[];
+  eras: Array<{ id: string; titulo: string }>;
+  /** O cofre do modo administrador publicado no acervo, quando há um. */
+  cofre: string | null;
   repoUrl: string;
   children: React.ReactNode;
 }
 
-const MAIN_LINKS = [
-  { href: ROTA_LINHA_DO_TEMPO, label: 'Linha do tempo' },
-  { href: '/compendio', label: 'Índice canônico' },
-  { href: '/alteracoes', label: 'Alterações' },
-  { href: '/convencoes', label: 'Convenções' },
-  { href: '/thalae', label: 'Aprender Thalae' },
+/** Explorar: o mundo por reino, por era e por personagem. */
+const EXPLORAR = [
+  { href: ROTA_LINHA_DO_TEMPO, label: 'Linha do tempo', Icone: Hourglass },
+  { href: '/reinos', label: 'Reinos', Icone: Castle },
+  { href: '/personagens', label: 'Personagens', Icone: Users },
+  { href: '/galeria', label: 'Galeria', Icone: Images },
+  { href: '/relacoes', label: 'Relações', Icone: Share2 },
+  { href: '/thalae', label: 'Aprender Thalae', Icone: Languages },
 ];
 
-export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
+/** Meta: como o acervo é mantido. */
+const META = [
+  { href: '/compendio', label: 'Índice canônico', Icone: BookOpen },
+  { href: '/alteracoes', label: 'Alterações', Icone: History },
+  { href: '/convencoes', label: 'Convenções', Icone: Ruler },
+];
+
+const MAIN_LINKS = [...EXPLORAR, ...META];
+
+export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }: Props) {
   const pathname = usePathname();
   const {
     theme, toggleTheme, nav: navMode, setNav, drawer, setDrawer, tools, toggleTools, admin,
+    soCanone, toggleCanone,
   } = useAppearance();
   const [search, setSearch] = useState(false);
   const [tokenDialog, setTokenDialog] = useState(false);
@@ -122,6 +138,13 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
           </Link>
 
           <div className="tools">
+            {soCanone ? (
+              <button type="button" className="tool tool--canone" onClick={toggleCanone} title="Mostrar tudo de novo">
+                <Stamp size={15} aria-hidden="true" />
+                <span>Só o cânone</span>
+                <X size={13} aria-hidden="true" />
+              </button>
+            ) : null}
             <button
               type="button"
               className="tool tool--wide"
@@ -179,6 +202,17 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
         <button
           type="button"
           className="utilrail__tool"
+          data-ativo={soCanone}
+          aria-pressed={soCanone}
+          onClick={toggleCanone}
+          title={soCanone ? 'Mostrar propostas e lacunas' : 'Ler só o que é cânone'}
+        >
+          <Stamp size={18} aria-hidden="true" />
+          <span className="utilrail__nome">{soCanone ? 'Só o cânone: ligado' : 'Só o cânone'}</span>
+        </button>
+        <button
+          type="button"
+          className="utilrail__tool"
           data-ativo={admin}
           onClick={() => setTokenDialog(true)}
           aria-label="Modo administrador"
@@ -224,6 +258,26 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
             >
               <X size={17} aria-hidden="true" />
             </button>
+          </div>
+
+          <div className="railnav__group">
+            <p className="railnav__title">Explorar</p>
+            <ul className="railnav__list">
+              {EXPLORAR.map(({ href, label, Icone }) => (
+                <li key={href}>
+                  <span className="railnav__linha" data-estado={estadoDe(pathname, href)}>
+                    <Link
+                      className="railnav__item railnav__item--icone"
+                      href={href}
+                      aria-current={estadoDe(pathname, href) === 'atual' ? 'page' : undefined}
+                    >
+                      <Icone size={16} aria-hidden="true" />
+                      <span>{label}</span>
+                    </Link>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="railnav__group">
@@ -274,16 +328,16 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
           <div className="railnav__group">
             <p className="railnav__title">Meta</p>
             <ul className="railnav__list">
-              {MAIN_LINKS.map((link) => (
-                <li key={link.href}>
-                  <span className="railnav__linha" data-estado={estadoDe(pathname, link.href)}>
-                    <span className="railnav__chave railnav__chave--vazia" aria-hidden="true" />
+              {META.map(({ href, label, Icone }) => (
+                <li key={href}>
+                  <span className="railnav__linha" data-estado={estadoDe(pathname, href)}>
                     <Link
-                      className="railnav__item"
-                      href={link.href}
-                      aria-current={estadoDe(pathname, link.href) === 'atual' ? 'page' : undefined}
+                      className="railnav__item railnav__item--icone"
+                      href={href}
+                      aria-current={estadoDe(pathname, href) === 'atual' ? 'page' : undefined}
                     >
-                      <span>{link.label}</span>
+                      <Icone size={16} aria-hidden="true" />
+                      <span>{label}</span>
                     </Link>
                   </span>
                 </li>
@@ -349,8 +403,40 @@ export function AppShell({ nav, searchRecords, repoUrl, children }: Props) {
         </div>
       </footer>
 
-      <SearchDialog records={searchRecords} open={search} onClose={() => setSearch(false)} />
-      <TokenDialog open={tokenDialog} onClose={() => setTokenDialog(false)} />
+      {/* No celular, o que mais se usa fica ao alcance do polegar. */}
+      <nav className="barra" aria-label="Atalhos">
+        <Link className="barra__item" href="/" aria-current={pathname === '/' ? 'page' : undefined}>
+          <Home size={19} aria-hidden="true" />
+          <span>Início</span>
+        </Link>
+        <Link
+          className="barra__item"
+          href="/reinos"
+          aria-current={estadoDe(pathname, '/reinos') === 'atual' ? 'page' : undefined}
+        >
+          <Castle size={19} aria-hidden="true" />
+          <span>Reinos</span>
+        </Link>
+        <button type="button" className="barra__item barra__item--busca" onClick={abrirBusca}>
+          <SearchIcon size={19} aria-hidden="true" />
+          <span>Buscar</span>
+        </button>
+        <Link
+          className="barra__item"
+          href="/personagens"
+          aria-current={estadoDe(pathname, '/personagens') === 'atual' ? 'page' : undefined}
+        >
+          <Users size={19} aria-hidden="true" />
+          <span>Personagens</span>
+        </Link>
+        <button type="button" className="barra__item" onClick={abrirNavegacao} aria-expanded={drawer}>
+          <Menu size={19} aria-hidden="true" />
+          <span>Acervo</span>
+        </button>
+      </nav>
+
+      <SearchDialog records={searchRecords} eras={eras} open={search} onClose={() => setSearch(false)} />
+      <TokenDialog open={tokenDialog} onClose={() => setTokenDialog(false)} cofre={cofre} />
     </div>
   );
 }

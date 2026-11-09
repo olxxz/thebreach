@@ -77,8 +77,21 @@
   list-style: none
   margin: 0
 
+.searchdialog__eras
+  padding: var(--space-2) var(--space-4)
+  border-bottom: 1px solid var(--border)
+  flex-wrap: nowrap
+  overflow-x: auto
+  flex: none
+
+  .filtro
+    font-size: var(--step--2)
+    padding: 0.2rem 0.65rem
+
 .searchresult
-  display: block
+  display: flex
+  align-items: center
+  gap: var(--space-3)
   padding: var(--space-3) var(--space-4)
   border-radius: var(--radius-m)
   text-decoration: none
@@ -87,8 +100,21 @@
   &:hover, &[data-active='true']
     background: var(--accent-soft)
 
+.searchresult__capa
+  flex: none
+  width: 3.6rem
+  height: 2.4rem
+  object-fit: contain
+  border-radius: var(--radius-s)
+
+.searchresult__corpo
+  display: flex
+  flex-direction: column
+  min-width: 0
+
 .searchresult__top
   display: flex
+  flex-wrap: wrap
   align-items: baseline
   gap: var(--space-3)
 

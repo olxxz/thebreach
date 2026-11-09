@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Hourglass, Languages, History } from 'lucide-react';
+import {
+  ArrowRight, BookOpen, Castle, History, Hourglass, Images, Languages, Share2, Users,
+} from 'lucide-react';
 import { getCompendium } from '@/lib/breach/api';
 import { CategoryCard, Hero, MarkerLegend, PageHead } from '@/components/content';
 import { FaixaDeEras } from '@/components/LinhaDoTempo';
@@ -7,12 +9,13 @@ import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 
 /**
  * Página inicial. Curta de propósito: a abertura do README do acervo, três
- * portas de entrada, as eras em ordem, as categorias e a última passagem. O
+ * portas de entrada (por era, por reino, por personagem), as eras em ordem, os
+ * reinos, as categorias e a última passagem. O
  * resto — lacunas, contradições, regras — mora no índice e nas convenções.
  */
 export default async function HomePage() {
   const compendium = await getCompendium();
-  const { stats, readme, eras } = compendium;
+  const { stats, readme, eras, reinos, personagens } = compendium;
   const ultima = compendium.changelog[0];
 
   return (
@@ -33,15 +36,19 @@ export default async function HomePage() {
           <span className="entrada__titulo">Ler em ordem</span>
           <span className="entrada__texto">A linha do tempo, da criação à segunda era, com os documentos de cada era.</span>
         </Link>
-        <Link className="entrada" href="/compendio">
-          <BookOpen size={20} aria-hidden="true" />
-          <span className="entrada__titulo">Índice canônico</span>
-          <span className="entrada__texto">Tudo o que foi decidido, numa linha por entidade.</span>
+        <Link className="entrada" href="/reinos">
+          <Castle size={20} aria-hidden="true" />
+          <span className="entrada__titulo">Por reino</span>
+          <span className="entrada__texto">
+            {reinos.map((reino) => reino.title).join(', ')}: quem governa, os lugares e os segredos de cada um.
+          </span>
         </Link>
-        <Link className="entrada" href="/thalae">
-          <Languages size={20} aria-hidden="true" />
-          <span className="entrada__titulo">Aprender Thalae</span>
-          <span className="entrada__texto">A língua dos celestiais: sons, raízes e selos.</span>
+        <Link className="entrada" href="/personagens">
+          <Users size={20} aria-hidden="true" />
+          <span className="entrada__titulo">Por personagem</span>
+          <span className="entrada__texto">
+            Os {personagens.length} Nefandos e Deviantes com rosto no acervo, lado a lado.
+          </span>
         </Link>
       </section>
 
@@ -56,6 +63,44 @@ export default async function HomePage() {
           <FaixaDeEras eras={eras} />
         </section>
       ) : null}
+
+      {reinos.length > 0 ? (
+        <section id="reinos">
+          <div className="section-title">
+            <h2>Os reinos</h2>
+            <Link href="/reinos">
+              todos <ArrowRight size={13} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="vitrine">
+            {reinos.map((reino) => (
+              <Link className="vitrine__item" key={reino.path} href={`/reinos#${reino.id}`}>
+                {reino.capa ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={reino.capa} alt="" loading="lazy" decoding="async" />
+                ) : null}
+                <span className="vitrine__nome">{reino.title}</span>
+                <span className="vitrine__era">{reino.eras[0]?.titulo ?? reino.subtipo ?? ''}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <nav className="atalhos" aria-label="Mais para explorar">
+        <Link href="/galeria">
+          <Images size={15} aria-hidden="true" /> Galeria
+        </Link>
+        <Link href="/relacoes">
+          <Share2 size={15} aria-hidden="true" /> Relações
+        </Link>
+        <Link href="/thalae">
+          <Languages size={15} aria-hidden="true" /> Aprender Thalae
+        </Link>
+        <Link href="/compendio">
+          <BookOpen size={15} aria-hidden="true" /> Índice canônico
+        </Link>
+      </nav>
 
       <section id="categorias">
         <div className="section-title">
