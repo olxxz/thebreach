@@ -88,3 +88,8 @@ jobs:
       - name: Publicar no Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # A sincronização dos arquivos às vezes passa dos 10 minutos de
+          # espera padrão. Desistir antes só deixa a publicação pela metade
+          # e empurra a seguinte para trás dela.
+          timeout: 1800000
