@@ -8,6 +8,7 @@ import { DiffView } from '@/components/DiffView';
 import { Ilustracoes, mudancasDeImagem, type ImagemPronta } from '@/components/Ilustracoes';
 import { MudarCaminho } from '@/components/MudarCaminho';
 import { Previa } from '@/components/Previa';
+import { EditorVisual, type EditorVisualRef } from '@/components/EditorVisual';
 import { useAppearance } from '@/components/AppearanceProvider';
 import { definirCampo, hoje } from '@/lib/breach/cabecalho';
 import { conferirTexto } from '@/lib/breach/conferir';
@@ -78,6 +79,9 @@ function Editor() {
   const [imagens, setImagens] = useState<ImagemPronta[]>([]);
   const [painel, setPainel] = useState<'nenhum' | 'ilustracoes' | 'caminho'>('nenhum');
   const [sugestaoDeCaminho, setSugestaoDeCaminho] = useState<string | undefined>(undefined);
+  /** Visual: o documento editado no lugar. Markdown: o texto cru e a prévia. */
+  const [modo, setModo] = useState<'visual' | 'markdown'>('markdown');
+  const visualRef = useRef<EditorVisualRef>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const folhaRef = useRef<HTMLDivElement>(null);
   /** Quem está conduzindo a rolagem agora, para os dois não se empurrarem. */
@@ -212,7 +216,24 @@ function Editor() {
       area.removeEventListener('scroll', daArea);
       folha.removeEventListener('scroll', daFolha);
     };
-  }, [estado]);
+  }, [estado, modo]);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem('breach:editor') === 'visual') setModo('visual');
+    } catch {
+      /* navegação privada: fica no visual */
+    }
+  }, []);
+
+  const escolherModo = (novo: 'visual' | 'markdown'): void => {
+    setModo(novo);
+    try {
+      window.localStorage.setItem('breach:editor', novo);
+    } catch {
+      /* a escolha vale só para esta visita */
+    }
+  };
 
   useEffect(() => {
     // Depois de gravar, não há o que perder: o aviso do navegador só atrapalha,
@@ -256,6 +277,10 @@ function Editor() {
 
   /** Enfia um trecho onde o cursor está — é como a citação da imagem entra. */
   const inserirNoCursor = (trecho: string): void => {
+    if (modo === 'visual') {
+      visualRef.current?.inserir(trecho);
+      return;
+    }
     const area = areaRef.current;
     const corte = area ? area.selectionStart : conteudo.length;
     mudar(conteudo.slice(0, corte) + trecho + conteudo.slice(corte));
@@ -484,25 +509,47 @@ function Editor() {
 
             <Cabecalho bruto={conteudo} onChange={mudar} somenteLeitura={enviando} />
 
-            <div className="editor__bancada">
-              <textarea
-                className="editor__area"
-                value={conteudo}
-                onChange={(event) => mudar(event.target.value)}
-                spellCheck
-                aria-label={`Markdown de ${path}`}
-                // `readOnly` e não `disabled`: no telefone, desabilitar o campo
-                // fecha o teclado e perde a posição da rolagem.
-                readOnly={enviando}
-              />
-              <Previa
-                bruto={paraGravar}
+            <div className="editor__modos" role="group" aria-label="Modo de edição">
+              <button type="button" aria-pressed={modo === 'visual'} onClick={() => escolherModo('visual')}>
+                Visual
+              </button>
+              <button type="button" aria-pressed={modo === 'markdown'} onClick={() => escolherModo('markdown')}>
+                Markdown
+              </button>
+            </div>
+
+            {modo === 'visual' ? (
+              <EditorVisual
+                ref={visualRef}
+                texto={conteudo}
+                onChange={mudar}
                 path={path}
                 arquivos={arquivos}
                 pendentes={imagens}
-                folhaRef={folhaRef}
+                somenteLeitura={enviando}
               />
-            </div>
+            ) : (
+              <div className="editor__bancada">
+                <textarea
+                  ref={areaRef}
+                  className="editor__area"
+                  value={conteudo}
+                  onChange={(event) => mudar(event.target.value)}
+                  spellCheck
+                  aria-label={`Markdown de ${path}`}
+                  // `readOnly` e não `disabled`: no telefone, desabilitar o campo
+                  // fecha o teclado e perde a posição da rolagem.
+                  readOnly={enviando}
+                />
+                <Previa
+                  bruto={paraGravar}
+                  path={path}
+                  arquivos={arquivos}
+                  pendentes={imagens}
+                  folhaRef={folhaRef}
+                />
+              </div>
+            )}
 
             <div className="painel">
               <div className="painel__abas">

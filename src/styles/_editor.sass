@@ -623,3 +623,316 @@
   align-items: center
   gap: var(--space-2)
   font-size: var(--step--1)
+
+// --- Editor visual ----------------------------------------------------------
+// O documento como aparece no site, editável no lugar.
+
+.editor__modos
+  display: inline-flex
+  align-self: flex-start
+  border: 1px solid var(--border)
+  border-radius: var(--radius-pill)
+  overflow: hidden
+
+  button
+    padding: 0.3rem 1rem
+    border: 0
+    background: transparent
+    color: var(--fg-muted)
+    font-family: var(--font-sans)
+    font-size: var(--step--1)
+    cursor: pointer
+
+    &[aria-pressed='true']
+      background: var(--accent-soft)
+      color: var(--accent-ink)
+
+.ed
+  position: relative
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+
+.ed-barra
+  position: sticky
+  top: 4.2rem
+  z-index: 20
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: var(--space-1)
+  padding: var(--space-2) var(--space-3)
+  border-bottom: 1px solid var(--border)
+  border-radius: var(--radius-l) var(--radius-l) 0 0
+  background: var(--paper-1)
+
+  button
+    display: inline-flex
+    align-items: center
+    gap: var(--space-2)
+    min-width: 2.1rem
+    height: 2.1rem
+    justify-content: center
+    padding: 0 var(--space-2)
+    border: 1px solid transparent
+    border-radius: var(--radius-m)
+    background: transparent
+    color: var(--fg-muted)
+    font-family: var(--font-sans)
+    font-size: var(--step--1)
+    cursor: pointer
+
+    &:hover
+      color: var(--fg)
+      border-color: var(--border)
+
+.ed-barra__fio
+  width: 1px
+  height: 1.4rem
+  margin-inline: var(--space-2)
+  background: var(--border)
+
+.ed-folha
+  padding: var(--space-5) var(--space-5) var(--space-6) 3.4rem
+  max-width: none
+
+  @include until(40rem)
+    padding: var(--space-4) var(--space-3) var(--space-5) 2.9rem
+
+  [data-editavel]
+    outline: none
+    min-height: 1.4em
+
+    // Bloco vazio mostra o que cabe nele.
+    &:empty::before, &:has(> br:only-child)::before
+      content: attr(data-vazio)
+      color: var(--ink-4)
+      opacity: 0.7
+      pointer-events: none
+
+  h1, h2, h3, h4
+    margin: 0
+
+  h1
+    font-size: var(--step-4)
+
+  p, blockquote
+    margin: 0
+
+  ul, ol
+    margin: 0
+
+  hr
+    margin: var(--space-2) 0
+
+.ed-bloco
+  position: relative
+  margin-block: var(--space-3)
+  border-radius: var(--radius-s)
+
+  &[data-tipo='titulo']
+    margin-top: var(--space-5)
+
+  &:focus-within
+    background: color-mix(in srgb, var(--accent-soft) 30%, transparent)
+    box-shadow: 0 0 0 0.35rem color-mix(in srgb, var(--accent-soft) 30%, transparent)
+
+  &[data-aberto='true']
+    z-index: 31
+
+// A alça do bloco: pôr outro abaixo, mover, transformar, apagar.
+.ed-alca
+  position: absolute
+  left: -2.9rem
+  top: 0
+  display: flex
+  opacity: 0
+  transition: opacity 0.15s
+  user-select: none
+
+  @include until(40rem)
+    left: -2.6rem
+    flex-direction: column
+
+  button
+    display: grid
+    place-items: center
+    width: 1.35rem
+    height: 1.6rem
+    border: 0
+    border-radius: var(--radius-s)
+    background: transparent
+    color: var(--ink-4)
+    cursor: pointer
+
+    &:hover
+      background: var(--paper-3)
+      color: var(--fg)
+
+.ed-bloco:hover > .ed-alca,
+.ed-bloco:focus-within > .ed-alca,
+.ed-bloco[data-aberto='true'] > .ed-alca
+  opacity: 1
+
+@media (hover: none)
+  .ed-alca
+    opacity: 0.55
+
+.ed-peca
+  cursor: pointer
+  user-select: all
+
+.ed-ref
+  padding: 0.05em 0.45em
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border))
+  border-radius: var(--radius-s)
+  background: var(--accent-soft)
+  color: var(--accent-ink)
+  font-family: var(--font-sans)
+  font-size: 0.86em
+  white-space: nowrap
+
+.ed-folha a[data-href]
+  color: var(--accent-ink)
+  text-decoration: underline
+  cursor: text
+
+.ed-bruto
+  display: block
+  width: 100%
+  padding: var(--space-3)
+  border: 1px dashed var(--line-strong)
+  border-radius: var(--radius-m)
+  background: var(--paper-2)
+  color: var(--fg)
+  font-family: var(--font-mono)
+  font-size: var(--step--1)
+  line-height: 1.5
+  resize: vertical
+
+.ed-figura
+  margin: 0
+  text-align: center
+
+  img
+    max-width: min(100%, 30rem)
+    max-height: 18rem
+    object-fit: contain
+
+  figcaption
+    font-style: italic
+    color: var(--fg-muted)
+
+.ed-figura__falta
+  display: block
+  padding: var(--space-4)
+  border: 1px dashed var(--border)
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+.ed-tabela
+  th, td
+    outline: none
+    min-width: 4rem
+
+    &:focus
+      background: color-mix(in srgb, var(--accent-soft) 60%, transparent)
+
+.ed-menu
+  position: absolute
+  left: 0
+  top: calc(100% + 0.3rem)
+  z-index: 32
+  display: flex
+  flex-direction: column
+  width: min(19rem, 80vw)
+  max-height: 20rem
+  overflow-y: auto
+  padding: var(--space-2)
+  border: 1px solid var(--line-strong)
+  border-radius: var(--radius-m)
+  background: var(--paper-0)
+  box-shadow: var(--shadow-l)
+  font-family: var(--font-sans)
+
+  p
+    margin: var(--space-2) var(--space-2) var(--space-1)
+    font-size: var(--step--2)
+    font-weight: 600
+    letter-spacing: 0.1em
+    text-transform: uppercase
+    color: var(--ink-4)
+
+  button
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    padding: 0.4rem var(--space-2)
+    border: 0
+    border-radius: var(--radius-s)
+    background: transparent
+    color: var(--fg)
+    font-family: inherit
+    font-size: var(--step--1)
+    text-align: left
+    cursor: pointer
+
+    b
+      font-weight: 500
+
+    span:not(.marker):not(.marker__label):not(.marker__source)
+      font-size: var(--step--2)
+      color: var(--ink-4)
+      overflow-wrap: anywhere
+
+    &:hover, &:focus-visible
+      background: var(--accent-soft)
+
+  input
+    margin-bottom: var(--space-2)
+    padding: var(--space-2)
+    border: 1px solid var(--border)
+    border-radius: var(--radius-s)
+    background: var(--paper-1)
+    color: var(--fg)
+    font: inherit
+
+.ed-menu__perigo b
+  color: var(--m-disputado-fg)
+
+.ed-solto
+  position: sticky
+  bottom: 5rem
+  z-index: 32
+  height: 0
+
+  .ed-menu
+    top: auto
+    bottom: 0
+    left: var(--space-5)
+
+.ed-veu
+  position: fixed
+  inset: 0
+  z-index: 30
+  border: 0
+  background: transparent
+  cursor: default
+
+.ed-fim
+  display: inline-flex
+  align-items: center
+  gap: var(--space-2)
+  margin-top: var(--space-4)
+  padding: 0.3rem 0.8rem
+  border: 1px dashed var(--border)
+  border-radius: var(--radius-pill)
+  background: transparent
+  color: var(--ink-4)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  cursor: pointer
+
+  &:hover
+    color: var(--fg)
+    border-color: var(--line-strong)
