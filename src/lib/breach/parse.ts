@@ -308,6 +308,7 @@ export async function parseDocument(
     // Preenchido em api.ts, que conhece a lista de arquivos do acervo.
     hero: null,
     heroAlt: heroAltFrom(preambleLines),
+    capa: null,
   };
 }
 

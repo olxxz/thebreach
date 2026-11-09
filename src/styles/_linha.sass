@@ -1,0 +1,264 @@
+// Linha do tempo, faixa de eras e a página inicial enxuta.
+@use 'mixins' as *
+
+// --- Página inicial -------------------------------------------------------
+
+.inicio
+  gap: var(--space-7)
+
+  .section-title a
+    display: inline-flex
+    align-items: center
+    gap: var(--space-1)
+
+  .pagehead
+    margin-bottom: 0
+
+.entradas
+  display: grid
+  gap: var(--space-4)
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr))
+
+.entrada
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+  padding: var(--space-5)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-l)
+  background: var(--bg-raised)
+  color: inherit
+  text-decoration: none
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease)
+
+  svg
+    color: var(--accent-ink)
+
+  &:hover, &:focus-visible
+    transform: translateY(-2px)
+    box-shadow: var(--shadow-m)
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+
+.entrada--destaque
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--bg-raised))
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border))
+
+.entrada__titulo
+  font-family: var(--font-heading)
+  font-size: var(--step-1)
+  color: var(--fg)
+
+.entrada__texto
+  font-size: var(--step--1)
+  color: var(--fg-muted)
+  text-wrap: pretty
+
+.novidade
+  display: flex
+  align-items: center
+  gap: var(--space-3)
+  padding: var(--space-3) var(--space-4)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  background: var(--bg-raised)
+  color: var(--fg-muted)
+  text-decoration: none
+  font-size: var(--step--1)
+
+  &:hover, &:focus-visible
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+    color: var(--fg)
+
+  svg:last-child
+    margin-left: auto
+    flex: none
+
+.novidade__data
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+  flex: none
+
+.novidade__titulo
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.leitura
+  summary
+    cursor: pointer
+    font-family: var(--font-heading)
+    font-size: var(--step-1)
+    color: var(--fg)
+
+  &[open] summary
+    margin-bottom: var(--space-4)
+
+.inicio__rodape
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+  text-align: center
+
+// --- Faixa de eras --------------------------------------------------------
+
+.faixa-eras
+  ol
+    list-style: none
+    margin: 0
+    padding: 0
+    display: flex
+    flex-wrap: wrap
+    gap: var(--space-2)
+
+  a
+    display: inline-flex
+    align-items: center
+    gap: var(--space-2)
+    padding: 0.35rem 0.85rem 0.35rem 0.4rem
+    border: 1px solid var(--border)
+    border-radius: var(--radius-pill)
+    background: var(--bg-raised)
+    color: var(--fg-muted)
+    font-family: var(--font-sans)
+    font-size: var(--step--1)
+    text-decoration: none
+    white-space: nowrap
+
+    &:hover, &:focus-visible
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+      color: var(--fg)
+
+.faixa-eras__n
+  display: inline-grid
+  place-items: center
+  width: 1.45rem
+  height: 1.45rem
+  border-radius: 50%
+  background: var(--accent-soft)
+  color: var(--accent-ink)
+  font-family: var(--font-num, var(--font-mono))
+  font-size: var(--step--2)
+
+// --- Linha do tempo --------------------------------------------------------
+
+.eras
+  list-style: none
+  margin: var(--space-7) 0 0
+  padding: 0
+  display: flex
+  flex-direction: column
+
+.era
+  position: relative
+  display: grid
+  grid-template-columns: 2.4rem minmax(0, 1fr)
+  gap: var(--space-4)
+  padding-bottom: var(--space-7)
+  scroll-margin-top: 5rem
+
+  // O fio que liga uma era à seguinte.
+  &::before
+    content: ''
+    position: absolute
+    left: 1.2rem
+    top: 2.4rem
+    bottom: 0
+    width: 1px
+    background: var(--border)
+
+  &:last-child::before
+    display: none
+
+.era__marca
+  position: relative
+  z-index: 1
+  display: grid
+  place-items: center
+  width: 2.4rem
+  height: 2.4rem
+  border-radius: 50%
+  border: 2px solid var(--accent)
+  background: var(--bg-app)
+  color: var(--accent-ink)
+  font-family: var(--font-num, var(--font-mono))
+  font-size: var(--step-0)
+
+.era__titulo
+  font-size: var(--step-3)
+  margin: 0.2rem 0 var(--space-3)
+
+.era__fatos
+  max-width: var(--measure)
+
+  ul
+    padding-left: 1.1rem
+
+.era__docs
+  margin-top: var(--space-4)
+
+  summary
+    cursor: pointer
+    font-family: var(--font-sans)
+    font-size: var(--step--1)
+    color: var(--fg-muted)
+    margin-bottom: var(--space-3)
+
+.era__lista
+  list-style: none
+  margin: 0
+  padding: 0
+  display: grid
+  gap: var(--space-3)
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr))
+
+.era__doc
+  display: flex
+  align-items: center
+  gap: var(--space-3)
+  padding: var(--space-2)
+  border: 1px solid var(--border)
+  border-radius: var(--radius-m)
+  background: var(--bg-raised)
+  color: inherit
+  text-decoration: none
+  height: 100%
+
+  .era__doc-vazio
+    display: grid
+    place-items: center
+    color: var(--ink-4)
+
+  img, .era__doc-vazio
+    flex: none
+    width: 3.6rem
+    height: 2.4rem
+    border-radius: var(--radius-s)
+    object-fit: contain
+    background: var(--bg-surface)
+
+  &:hover, &:focus-visible
+    border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 55%, var(--border))
+
+.era__doc-texto
+  display: flex
+  flex-direction: column
+  min-width: 0
+
+.era__doc-titulo
+  font-size: var(--step--1)
+  color: var(--fg)
+  line-height: 1.3
+
+.era__doc-cat
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+// Selo de era no cabeçalho de um documento.
+.chip--era
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border))
+  color: var(--accent-ink)
+
+  &:hover, &:focus-visible
+    background: var(--accent-soft)

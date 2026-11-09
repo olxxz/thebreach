@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getBacklinks, getCategories, getCategory, getDoc, getGeradoEm } from '@/lib/breach/api';
+import {
+  getBacklinks, getCategories, getCategory, getCompendium, getDoc, getErasDe, getGeradoEm,
+} from '@/lib/breach/api';
+import { CAMINHO_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
+import { FaixaDeEras, LinhaDoTempo } from '@/components/LinhaDoTempo';
 import { Crumbs, DocArticle, Hero, PageHead } from '@/components/content';
 import { CriarLink } from '@/components/CriarLink';
 import { EditarLink } from '@/components/EditarLink';
@@ -33,7 +37,12 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
   ]);
   if (!doc || !category) notFound();
 
-  const [backlinks, geradoEm] = await Promise.all([getBacklinks(doc.path), getGeradoEm()]);
+  const [backlinks, geradoEm, eras] = await Promise.all([
+    getBacklinks(doc.path),
+    getGeradoEm(),
+    getErasDe(doc.path),
+  ]);
+  if (doc.path === CAMINHO_LINHA_DO_TEMPO) return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} />;
   const eyebrow = doc.header.subtipo
     ? `${category.title} › ${doc.header.subtipo}`
     : doc.kind === 'narrativa'
@@ -73,7 +82,25 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
         </div>
       </PageHead>
       <Recente path={doc.path} geradoEm={geradoEm} />
-      <DocArticle doc={doc} backlinks={backlinks} />
+      <DocArticle doc={doc} backlinks={backlinks} eras={eras} />
+    </div>
+  );
+}
+
+/**
+ * A linha do tempo tem página própria: em vez das seções do documento, as eras
+ * numa coluna, com os documentos de cada uma.
+ */
+async function PaginaDaLinhaDoTempo({ titulo, intro }: { titulo: string; intro: string }) {
+  const compendium = await getCompendium();
+  return (
+    <div>
+      <Crumbs trail={[{ href: '/', label: 'Compêndio' }, { href: '/c/historia', label: 'História' }, { label: titulo }]} />
+      <PageHead eyebrow="Ler em ordem" title={titulo}>
+        {intro ? <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: intro }} /> : null}
+      </PageHead>
+      <FaixaDeEras eras={compendium.eras} naPropriaPagina />
+      <LinhaDoTempo eras={compendium.eras} docs={compendium.docs} categories={compendium.categories} />
     </div>
   );
 }

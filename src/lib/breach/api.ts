@@ -24,11 +24,13 @@ import {
   SOURCE,
   sourceDescription,
 } from './source';
-import { ilustracaoDe } from './imagens';
+import { ilustracaoDe, pastaDe, urlDaImagem } from './imagens';
 import { labelFromPath, listItemsUnder, parseDocument, tableRows, tituloDe } from './parse';
 import { renderMarkdown, toPlainText, type Titulos } from './markdown';
 import { mergeTallies, tallyTotal } from './markers';
 import { hrefForPath, parseCategoryDir, slugify } from './slug';
+import { CAMINHO_LINHA_DO_TEMPO, erasPorDocumento, lerLinhaDoTempo } from './linhaDoTempo';
+import type { EraRef } from './linhaDoTempo';
 
 /** Arquivos que não viram página. O README da raiz vira a página inicial. */
 const EXCLUDED = new Set(['CLAUDE.md']);
@@ -159,6 +161,19 @@ function buildTree(entries: BreachDoc[]): DocNode[] {
   return ordenar(roots);
 }
 
+/**
+ * A imagem citada logo abaixo do título, quando há uma — é como os documentos
+ * soltos, que não têm hero, abrem com ilustração.
+ */
+function capaDoTopo(caminho: string, markdown: string, acervo: Set<string>): string | null {
+  const topo = markdown.split('\n').slice(0, 4).join('\n');
+  const citada = /!\[[^\]]*\]\(([^)\s]+)\)/.exec(topo)?.[1];
+  if (!citada || /^https?:/i.test(citada)) return null;
+  const pasta = pastaDe(caminho);
+  const noAcervo = (pasta ? `${pasta}/` : '') + citada.replace(/^\.\//, '');
+  return acervo.has(noAcervo) ? urlDaImagem(noAcervo) : null;
+}
+
 /** Título de cada documento, pela rota do site. */
 function titulosPorRota(files: string[], raws: Map<string, string>): Map<string, string> {
   const titulos = new Map<string, string>();
@@ -189,6 +204,7 @@ async function build(): Promise<Compendium> {
   );
   for (const doc of docs) {
     doc.hero = ilustracaoDe(doc.path, acervo);
+    doc.capa = doc.hero ?? capaDoTopo(doc.path, raws.get(doc.path) ?? '', acervo);
   }
 
   const byPath = new Map(docs.map((doc) => [doc.path, doc]));
@@ -233,6 +249,7 @@ async function build(): Promise<Compendium> {
   const indexRaw = raws.get(`${META_DIR}/INDICE-CANONICO.md`) ?? '';
   const changelogRaw = raws.get(`${META_DIR}/REGISTRO-DE-ALTERACOES.md`) ?? '';
   const { entries, priorityGaps, contradictions } = parseCanonicalIndex(indexRaw);
+  const eras = await lerLinhaDoTempo(raws.get(CAMINHO_LINHA_DO_TEMPO) ?? '', titulos);
 
   const entryDocs = docs.filter((doc) => doc.kind === 'entrada' || doc.kind === 'narrativa');
   const dates = docs.map((doc) => doc.updatedAt).filter((date): date is string => Boolean(date));
@@ -246,6 +263,8 @@ async function build(): Promise<Compendium> {
     indexDoc: byPath.get(`${META_DIR}/INDICE-CANONICO.md`) ?? null,
     readme: byPath.get('README.md') ?? null,
     priorityGaps,
+    eras,
+    erasPorCaminho: Object.fromEntries(erasPorDocumento(eras)),
     contradictions,
     stats: {
       docs: entryDocs.length,
@@ -302,6 +321,12 @@ export async function getDoc(categorySlug: string, docSlug: string): Promise<Bre
 }
 
 /** Documentos que citam um dado documento — retrolinks. */
+/** As eras em que um documento se passa, segundo a linha do tempo. */
+export async function getErasDe(path: string): Promise<EraRef[]> {
+  const compendium = await getCompendium();
+  return compendium.erasPorCaminho[path] ?? [];
+}
+
 export async function getBacklinks(path: string): Promise<BreachDoc[]> {
   const compendium = await getCompendium();
   return compendium.docs.filter(
@@ -358,4 +383,5 @@ export async function getSearchIndex(): Promise<SearchRecord[]> {
   return records;
 }
 
+export { CAMINHO_LINHA_DO_TEMPO };
 export { REPO_URL, SOURCE, sourceDescription, githubUrlFor, tallyTotal, slugify };

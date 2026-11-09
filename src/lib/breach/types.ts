@@ -1,3 +1,5 @@
+import type { Era, EraRef } from './linhaDoTempo';
+
 /**
  * Modelo de dados do Compêndio Breach.
  *
@@ -88,6 +90,11 @@ export interface BreachDoc {
   hero: string | null;
   /** Legenda da ilustração de abertura, tirada do texto alternativo. */
   heroAlt: string | null;
+  /**
+   * Miniatura para listas: o hero, ou, num documento solto (que não tem hero),
+   * a imagem citada logo abaixo do título.
+   */
+  capa: string | null;
 }
 
 /** Uma entidade e as entidades contidas nela — uma classe e suas espécies. */
@@ -156,6 +163,10 @@ export interface Compendium {
   readme: BreachDoc | null;
   /** Lacunas prioritárias declaradas no índice canônico. */
   priorityGaps: Array<{ lacuna: string; onde: string; impacto: string }>;
+  /** As eras da linha do tempo, em ordem (06-historia/linha-do-tempo/). */
+  eras: Era[];
+  /** Caminho de cada documento → as eras em que ele se passa. */
+  erasPorCaminho: Record<string, EraRef[]>;
   /** Contradições em aberto declaradas no índice canônico. */
   contradictions: Array<{ n: string; descricao: string; documentos: string; status: string }>;
   stats: {

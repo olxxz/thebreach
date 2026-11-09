@@ -1,201 +1,96 @@
 import Link from 'next/link';
-import { ArrowRight, BookMarked, History, ScrollText, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Hourglass, Languages, History } from 'lucide-react';
 import { getCompendium } from '@/lib/breach/api';
-import {
-  CategoryCard,
-  Chip,
-  DocSections,
-  Hero,
-  MarkerLegend,
-  PageHead,
-} from '@/components/content';
-import { Toc, type TocItem } from '@/components/Toc';
-import { MARKERS, MARKER_ORDER } from '@/lib/breach/markers';
-import { lerImpacto, ordenarPorImpacto } from '@/lib/breach/lacunas';
-
-/** Quantas lacunas prioritárias a página inicial mostra; o resto fica no índice. */
-const LACUNAS_NA_INICIAL = 6;
+import { CategoryCard, Hero, MarkerLegend, PageHead } from '@/components/content';
+import { FaixaDeEras } from '@/components/LinhaDoTempo';
+import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 
 /**
- * Página inicial. O texto é o README da raiz do acervo, renderizado como
- * qualquer outro documento; entre a abertura e as seções entram os números e
- * a grade de categorias, que são do site e não do acervo.
+ * Página inicial. Curta de propósito: a abertura do README do acervo, três
+ * portas de entrada, as eras em ordem, as categorias e a última passagem. O
+ * resto — lacunas, contradições, regras — mora no índice e nas convenções.
  */
 export default async function HomePage() {
   const compendium = await getCompendium();
-  const { stats, readme } = compendium;
-  const lastChange = compendium.changelog[0];
-  const lacunas = ordenarPorImpacto(compendium.priorityGaps);
-  const lacunasEmDestaque = lacunas.slice(0, LACUNAS_NA_INICIAL);
-  const contradicoes = compendium.contradictions.length;
-
-  // O sumário da home mistura as seções do site com as do README do acervo, na
-  // ordem em que aparecem na página.
-  const tocItems: TocItem[] = [
-    { id: 'categorias', label: 'Categorias', level: 2 as const },
-    ...(readme?.sections ?? []).flatMap((section) => [
-      {
-        id: section.id,
-        label: section.number ? `${section.number}. ${section.title}` : section.title,
-        level: 2 as const,
-      },
-      ...section.children.map((child) => ({ id: child.id, label: child.title, level: 3 as const })),
-    ]),
-    { id: 'marcadores', label: 'Como ler os marcadores', level: 2 as const },
-    { id: 'lacunas', label: 'Lacunas prioritárias', level: 2 as const },
-    ...(lastChange ? [{ id: 'passagem', label: 'Última passagem editorial', level: 2 as const }] : []),
-    { id: 'estado', label: 'Estado do acervo', level: 2 as const },
-  ];
+  const { stats, readme, eras } = compendium;
+  const ultima = compendium.changelog[0];
 
   return (
-    <div className="stack">
+    <div className="stack inicio">
       {readme?.hero ? (
         <Hero src={readme.hero} alt={readme.heroAlt ?? 'Vista das montanhas do mundo conhecido, com um dragão em voo'} />
       ) : null}
 
-      <div>
-        <PageHead eyebrow="Acervo" title={readme?.title ?? 'Compêndio Breach'}>
-          <div className="chips">
-            <Chip
-              label="Fonte"
-              value={`${compendium.source.owner}/${compendium.source.repo}`}
-              icon={<BookMarked size={13} aria-hidden="true" />}
-            />
-            {readme?.header.status ? <Chip label="Status" value={readme.header.status} status /> : null}
-            {stats.updatedAt ? <Chip label="Última atualização" value={stats.updatedAt} /> : null}
-          </div>
-        </PageHead>
-
+      <PageHead eyebrow="Acervo de um universo em construção" title={readme?.title ?? 'Compêndio Breach'}>
         {readme?.introHtml ? (
-          <div className="doc__intro prose" dangerouslySetInnerHTML={{ __html: readme.introHtml }} />
+          <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: readme.introHtml }} />
         ) : null}
-      </div>
+      </PageHead>
 
-      <section className="stats">
-        <div className="stat">
-          <span className="stat__value">{stats.docs}</span>
-          <span className="stat__label">documentos</span>
+      <section className="entradas" aria-label="Por onde começar">
+        <Link className="entrada entrada--destaque" href={ROTA_LINHA_DO_TEMPO}>
+          <Hourglass size={20} aria-hidden="true" />
+          <span className="entrada__titulo">Ler em ordem</span>
+          <span className="entrada__texto">A linha do tempo, da criação à segunda era, com os documentos de cada era.</span>
+        </Link>
+        <Link className="entrada" href="/compendio">
+          <BookOpen size={20} aria-hidden="true" />
+          <span className="entrada__titulo">Índice canônico</span>
+          <span className="entrada__texto">Tudo o que foi decidido, numa linha por entidade.</span>
+        </Link>
+        <Link className="entrada" href="/thalae">
+          <Languages size={20} aria-hidden="true" />
+          <span className="entrada__titulo">Aprender Thalae</span>
+          <span className="entrada__texto">A língua dos celestiais: sons, raízes e selos.</span>
+        </Link>
+      </section>
+
+      {eras.length > 0 ? (
+        <section id="eras">
+          <div className="section-title">
+            <h2>As eras</h2>
+            <Link href={ROTA_LINHA_DO_TEMPO}>
+              linha do tempo <ArrowRight size={13} aria-hidden="true" />
+            </Link>
+          </div>
+          <FaixaDeEras eras={eras} />
+        </section>
+      ) : null}
+
+      <section id="categorias">
+        <div className="section-title">
+          <h2>Categorias</h2>
         </div>
-        <div className="stat">
-          <span className="stat__value">{stats.categories}</span>
-          <span className="stat__label">categorias</span>
-        </div>
-        <div className="stat">
-          <span className="stat__value">{stats.markers.CANONICO ?? 0}</span>
-          <span className="stat__label">afirmações canônicas</span>
-        </div>
-        <div className="stat">
-          <span className="stat__value">{stats.gaps}</span>
-          <span className="stat__label">seções em lacuna</span>
-        </div>
-        <div className="stat">
-          <span className="stat__value">{stats.narratives}</span>
-          <span className="stat__label">narrativas-fonte</span>
+        <div className="grid">
+          {compendium.categories.map((category) => (
+            <CategoryCard key={category.slug} category={category} />
+          ))}
         </div>
       </section>
 
-      {/* Daqui para baixo a página ganha coluna de sumário, como um documento:
-          é a partir das categorias que ela tem seções para percorrer. */}
-      <div className="doclayout">
-        <div className="stack">
-          <section id="categorias">
-            <div className="section-title">
-              <h2>Categorias</h2>
-              <Link href="/compendio">
-                índice canônico <ArrowRight size={13} aria-hidden="true" />
-              </Link>
-            </div>
-            <div className="grid">
-              {compendium.categories.map((category) => (
-                <CategoryCard key={category.slug} category={category} />
-              ))}
-            </div>
-          </section>
+      {ultima ? (
+        <Link className="novidade" href="/alteracoes">
+          <History size={15} aria-hidden="true" />
+          <span className="novidade__data">{ultima.date}</span>
+          <span className="novidade__titulo">{ultima.title}</span>
+          <ArrowRight size={14} aria-hidden="true" />
+        </Link>
+      ) : null}
 
-          {readme ? (
-            <article className="doc">
-              <DocSections sections={readme.sections} />
-            </article>
-          ) : null}
+      <details className="panel leitura">
+        <summary>Como ler os marcadores</summary>
+        <p className="card__text panel__lede">
+          Toda afirmação traz a camada de onde vem: o que é verdade no mundo e o que os povos acreditam. Sem marcador,
+          a afirmação não conta como documentada. As regras completas estão nas{' '}
+          <Link href="/convencoes">convenções</Link>.
+        </p>
+        <MarkerLegend />
+      </details>
 
-          <section id="marcadores">
-            <div className="section-title">
-              <h2>Como ler os marcadores</h2>
-              <Link href="/convencoes">
-                convenções <ArrowRight size={13} aria-hidden="true" />
-              </Link>
-            </div>
-            <div className="panel">
-              <p className="card__text panel__lede">
-                Toda afirmação do acervo carrega a camada de onde vem. Sem marcador, a afirmação não é
-                considerada documentada.
-              </p>
-              <MarkerLegend />
-            </div>
-          </section>
-
-          <section id="lacunas">
-            <div className="section-title">
-              <h2>Lacunas prioritárias</h2>
-              {lacunas.length > lacunasEmDestaque.length ? (
-                <Link href="/compendio#lacunas">
-                  ver as {lacunas.length} <ArrowRight size={13} aria-hidden="true" />
-                </Link>
-              ) : null}
-            </div>
-            <div className="grid">
-              {lacunasEmDestaque.map((gap) => {
-                const { nivel, detalhe } = lerImpacto(gap.impacto);
-                return (
-                  <div className="card card--empty" key={gap.lacuna}>
-                    <span className="card__num" data-impacto={nivel ?? undefined}>
-                      <ScrollText size={13} aria-hidden="true" /> impacto {nivel ?? (gap.impacto || '—')}
-                    </span>
-                    <h3 className="card__title">{gap.lacuna}</h3>
-                    {detalhe && nivel ? <p className="card__text">{detalhe}</p> : null}
-                    <p className="card__meta">{gap.onde}</p>
-                  </div>
-                );
-              })}
-              {lacunas.length === 0 ? <p className="empty">Nenhuma lacuna prioritária registrada.</p> : null}
-            </div>
-          </section>
-
-          {lastChange ? (
-            <section id="passagem">
-              <div className="section-title">
-                <h2>Última passagem editorial</h2>
-                <Link href="/alteracoes">
-                  registro completo <ArrowRight size={13} aria-hidden="true" />
-                </Link>
-              </div>
-              <div className="panel">
-                <p className="timeline__date">
-                  <History size={13} aria-hidden="true" /> {lastChange.date}
-                </p>
-                <h3 className="timeline__title">{lastChange.title}</h3>
-                <div className="prose" dangerouslySetInnerHTML={{ __html: lastChange.html }} />
-              </div>
-            </section>
-          ) : null}
-
-          <section className="panel card--ghost" id="estado">
-            <p className="panel__title">
-              <Sparkles size={13} aria-hidden="true" /> Estado do acervo
-            </p>
-            <p className="card__text">
-              {MARKER_ORDER.filter((id) => stats.markers[id])
-                .map((id) => `${stats.markers[id]} ${MARKERS[id].label.toLowerCase()}`)
-                .join(' · ')}
-              {contradicoes === 0
-                ? ' — nenhuma contradição em aberto.'
-                : ` — ${contradicoes} ${contradicoes === 1 ? 'contradição' : 'contradições'} em aberto.`}
-            </p>
-          </section>
-        </div>
-
-        <Toc items={tocItems} />
-      </div>
+      <p className="inicio__rodape">
+        {stats.docs} documentos · {stats.categories} categorias · {stats.markers.CANONICO ?? 0} afirmações canônicas
+        {stats.updatedAt ? ` · atualizado em ${stats.updatedAt}` : ''}
+      </p>
     </div>
   );
 }

@@ -19,6 +19,7 @@ import { useArvoreAberta } from '@/hooks/useArvoreAberta';
 import { useArrastoGavetas } from '@/hooks/useArrastoGavetas';
 import { useAtalhos } from '@/hooks/useAtalhos';
 import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
+import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 
 export type { NavCategory, NavDoc };
 
@@ -30,6 +31,7 @@ interface Props {
 }
 
 const MAIN_LINKS = [
+  { href: ROTA_LINHA_DO_TEMPO, label: 'Linha do tempo' },
   { href: '/compendio', label: 'Índice canônico' },
   { href: '/alteracoes', label: 'Alterações' },
   { href: '/convencoes', label: 'Convenções' },

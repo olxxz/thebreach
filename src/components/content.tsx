@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { FileText, GitBranch, Link2, ScrollText } from 'lucide-react';
+import { FileText, GitBranch, Hourglass, Link2, ScrollText } from 'lucide-react';
+import type { EraRef } from '@/lib/breach/linhaDoTempo';
 import type {
   BreachCategory,
   BreachDoc,
@@ -277,9 +278,12 @@ export function DocArticle({
   doc,
   backlinks = [],
   semIntro = false,
+  eras = [],
 }: {
   doc: BreachDoc;
   backlinks?: BreachDoc[];
+  /** Eras da linha do tempo em que o documento se passa. */
+  eras?: EraRef[];
   /** A página já mostra a abertura do documento como lede do cabeçalho. */
   semIntro?: boolean;
 }) {
@@ -298,6 +302,13 @@ export function DocArticle({
           nunca se meter entre o título e a ficha do documento. */}
       <div className="doc__head">
         <div className="doc__meta">
+          {eras.map((era) => (
+            <Link className="chip chip--era" key={era.id} href={era.href}>
+              <Hourglass size={12} aria-hidden="true" />
+              <span className="chip__key">Era</span>
+              <span>{era.titulo}</span>
+            </Link>
+          ))}
           {doc.header.classificacao ? <Chip label="Classificação" value={doc.header.classificacao} /> : null}
           {doc.header.status ? <Chip label="Status" value={doc.header.status} status /> : null}
           {doc.header.fontesInternas.length > 0 ? (
