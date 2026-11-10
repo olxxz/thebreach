@@ -351,7 +351,11 @@ export function corridoParaHtml(nos: No[]): string {
     .join('');
 }
 
-export const mdParaHtml = (md: string): string => corridoParaHtml(lerCorrido(md));
+/**
+ * O espaço do fim vira espaço duro: o HTML engole o espaço final de um bloco,
+ * e o cursor posto depois de um marcador recém-criado colaria no selo.
+ */
+export const mdParaHtml = (md: string): string => corridoParaHtml(lerCorrido(md)).replace(/ $/, '&nbsp;');
 
 /** O texto corrido volta idêntico depois de lido? Então pode ser editado rico. */
 function corridoFiel(md: string): boolean {
@@ -372,7 +376,7 @@ function envolver(marca: string, dentro: string): string {
 /** Lê o conteúdo de um elemento editável como markdown corrido. */
 export function domParaMd(raiz: Node, pular?: (el: Element) => boolean): string {
   let saida = '';
-  raiz.childNodes.forEach((filho, i) => {
+  raiz.childNodes.forEach((filho) => {
     if (filho.nodeType === 3) {
       saida += (filho.nodeValue ?? '').replace(/ /g, ' ').replace(/​/g, '');
       return;
@@ -401,12 +405,13 @@ export function domParaMd(raiz: Node, pular?: (el: Element) => boolean): string 
         saida += `[${dentro()}](${el.dataset.href ?? el.getAttribute('href') ?? ''})`;
         break;
       case 'BR':
-        // O `<br>` que o navegador deixa no fim de um bloco vazio não é texto.
-        if (i < raiz.childNodes.length - 1) saida += '\n';
+        // O navegador espalha `<br>` por conta própria em bloco editável; a
+        // quebra de linha do acervo é sempre um bloco novo, nunca esta.
         break;
       case 'DIV':
       case 'P':
-        saida += `${saida && !saida.endsWith('\n') ? '\n' : ''}${dentro()}`;
+        // Embrulho que o navegador cria sozinho: o texto segue na mesma linha.
+        saida += dentro();
         break;
       default:
         saida += dentro();
@@ -575,7 +580,7 @@ export function podeSerRico(bloco: Bloco): boolean {
     case 'paragrafo':
       return corridoFiel(bloco.raw);
     case 'titulo':
-      return /^#{1,6} \S/.test(bloco.raw) && corridoFiel(lerTitulo(bloco.raw).texto);
+      return /^#{1,6} /.test(bloco.raw) && corridoFiel(lerTitulo(bloco.raw).texto);
     case 'lista': {
       const lista = lerLista(bloco.raw);
       if (!lista || listaParaMd(lista) !== bloco.raw) return false;

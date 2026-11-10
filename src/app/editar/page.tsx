@@ -12,10 +12,10 @@ import { EditorVisual, type EditorVisualRef } from '@/components/EditorVisual';
 import { useAppearance } from '@/components/AppearanceProvider';
 import { definirCampo, hoje } from '@/lib/breach/cabecalho';
 import { conferirTexto } from '@/lib/breach/conferir';
+import { comDiario } from '@/lib/breach/diario';
 import {
   GithubApiError,
   commitarArvore,
-  gravarArquivo,
   lerArquivo,
   lerBlob,
   listarArvore,
@@ -55,6 +55,8 @@ function Editor() {
   const [conteudo, setConteudo] = useState('');
   const [sha, setSha] = useState('');
   const [mensagem, setMensagem] = useState('');
+  /** O que o Criador quer lembrar à revisão: vai para o diário do editor. */
+  const [nota, setNota] = useState('');
 
   const [remoto, setRemoto] = useState<{ conteudo: string; sha: string } | null>(null);
   const [rascunhoAchado, setRascunhoAchado] = useState<Rascunho | null>(null);
@@ -80,7 +82,7 @@ function Editor() {
   const [painel, setPainel] = useState<'nenhum' | 'ilustracoes' | 'caminho'>('nenhum');
   const [sugestaoDeCaminho, setSugestaoDeCaminho] = useState<string | undefined>(undefined);
   /** Visual: o documento editado no lugar. Markdown: o texto cru e a prévia. */
-  const [modo, setModo] = useState<'visual' | 'markdown'>('markdown');
+  const [modo, setModo] = useState<'visual' | 'markdown'>('visual');
   const visualRef = useRef<EditorVisualRef>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const folhaRef = useRef<HTMLDivElement>(null);
@@ -220,7 +222,7 @@ function Editor() {
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem('breach:editor') === 'visual') setModo('visual');
+      if (window.localStorage.getItem('breach:editor') === 'markdown') setModo('markdown');
     } catch {
       /* navegação privada: fica no visual */
     }
@@ -326,7 +328,15 @@ function Editor() {
     setErro('');
     setGravado(null);
     try {
-      const feito = await commitarArvore(mudancas, mensagemDoCommit, token);
+      const comRegistro = await comDiario(mudancas, mensagemDoCommit, token, {
+        acao: destino !== path ? 'mudança de caminho' : 'edição',
+        principal: path,
+        destino,
+        antes: original,
+        nota,
+      });
+      const feito = await commitarArvore(comRegistro, mensagemDoCommit, token);
+      setNota('');
       // Cada documento que entrou no commit fica visível no próprio navegador
       // enquanto a publicação não alcança.
       for (const mudanca of mudancas) {
@@ -393,7 +403,23 @@ function Editor() {
     setGravado(null);
 
     try {
-      const feito = await gravarArquivo(path, enviado, shaAlvo, mensagemCompleta, token);
+      // O `sha` continua sendo o controle de concorrência: se o arquivo mudou
+      // no GitHub desde que foi aberto, a gravação para antes de começar.
+      const naPonta = await lerArquivo(path, token);
+      if (naPonta && naPonta.sha !== shaAlvo) {
+        throw new GithubApiError(409, `${path} mudou no GitHub depois que esta página o abriu.`);
+      }
+      // O texto e a entrada do diário entram no mesmo commit.
+      const mudancas = await comDiario([{ tipo: 'texto', path, conteudo: enviado }], mensagemCompleta, token, {
+        acao: 'edição',
+        principal: path,
+        antes: original,
+        nota,
+      });
+      const commit = await commitarArvore(mudancas, mensagemCompleta, token);
+      const gravadoAgora = await lerArquivo(path, token);
+      const feito = { sha: gravadoAgora?.sha ?? shaAlvo, commitUrl: commit.commitUrl };
+      setNota('');
       // O site leva cerca de um minuto para reconstruir. Até lá, a página de
       // leitura mostra a versão anterior — e sem isto pareceria que a gravação
       // não pegou.
@@ -666,6 +692,22 @@ function Editor() {
                   placeholder="registra o porte da espécie"
                   readOnly={enviando}
                 />
+              </span>
+            </label>
+
+            <label className="editor__mensagem">
+              <span className="editor__rotulo">Nota para a revisão (opcional)</span>
+              <span className="editor__campo">
+                <input
+                  type="text"
+                  value={nota}
+                  onChange={(event) => setNota(event.target.value)}
+                  placeholder="falta citar isto em Luora; conferir o índice"
+                  readOnly={enviando}
+                />
+              </span>
+              <span className="editor__dica">
+                Toda gravação deixa uma entrada no diário do editor, com o que mudou e o que falta conferir em volta.
               </span>
             </label>
 

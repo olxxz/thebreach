@@ -189,6 +189,12 @@ const BlocoNaTela = memo(function BlocoNaTela({ bloco, imagem, somenteLeitura }:
   // Lido só quando `rev` muda — de propósito.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const html = useMemo(() => desenhar(bloco), [bloco.id, bloco.rev, rico]);
+  // O HTML é posto à mão, e só quando `rev` muda: entregue ao React, ele o
+  // reescreve a cada tecla e leva o cursor embora.
+  const alvo = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (alvo.current) alvo.current.innerHTML = html;
+  }, [html]);
   const comum = {
     'data-editavel': bloco.id,
     contentEditable: editavel,
@@ -215,16 +221,16 @@ const BlocoNaTela = memo(function BlocoNaTela({ bloco, imagem, somenteLeitura }:
   switch (bloco.tipo) {
     case 'titulo': {
       const Tag = `h${Math.min(lerTitulo(bloco.raw).nivel, 4)}` as 'h1' | 'h2' | 'h3' | 'h4';
-      return <Tag {...comum} data-vazio="Título" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <Tag {...comum} data-vazio="Título" ref={alvo as never} />;
     }
     case 'citacao':
-      return <blockquote {...comum} data-vazio="Recorte" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <blockquote {...comum} data-vazio="Recorte" ref={alvo as never} />;
     case 'lista':
-      return <div {...comum} className="ed-lista" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div {...comum} className="ed-lista" ref={alvo as never} />;
     case 'tabela':
       return (
         <div className="md-table ed-tabela" data-tabela={bloco.id}>
-          <table dangerouslySetInnerHTML={{ __html: html }} />
+          <table ref={alvo as never} />
         </div>
       );
     case 'imagem': {
@@ -233,14 +239,14 @@ const BlocoNaTela = memo(function BlocoNaTela({ bloco, imagem, somenteLeitura }:
         <figure className="ed-figura">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {imagem ? <img src={imagem} alt="" /> : <span className="ed-figura__falta">{lida?.src}</span>}
-          <figcaption {...comum} data-vazio="Legenda" dangerouslySetInnerHTML={{ __html: html }} />
+          <figcaption {...comum} data-vazio="Legenda" ref={alvo as never} />
         </figure>
       );
     }
     case 'regua':
       return <hr />;
     default:
-      return <p {...comum} data-vazio="Escreva, ou tecle / para escolher um bloco" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <p {...comum} data-vazio="Escreva, ou tecle / para escolher um bloco" ref={alvo as never} />;
   }
 });
 
@@ -640,6 +646,11 @@ export const EditorVisual = forwardRef<EditorVisualRef, Props>(function EditorVi
   const devolverSelecao = (): boolean => {
     const guardada = selecaoGuardada.current;
     if (!guardada) return false;
+    // O foco volta ao bloco antes do cursor: sem ele, o que se digita depois
+    // não tem para onde ir.
+    const no = guardada.startContainer;
+    const dono = (no.nodeType === 1 ? (no as HTMLElement) : no.parentElement)?.closest<HTMLElement>('[data-editavel]');
+    dono?.focus();
     const selecao = window.getSelection();
     selecao?.removeAllRanges();
     selecao?.addRange(guardada);

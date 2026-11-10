@@ -38,6 +38,7 @@ import {
   referenciasDe,
 } from './mundo';
 import { lerRaizes } from '@/lib/thalae/raizes';
+import { CAMINHO_COFRE, lerDocumentoDoCofre } from './cofre';
 
 /** Arquivos que não viram página. O README da raiz vira a página inicial. */
 const EXCLUDED = new Set(['CLAUDE.md']);
@@ -275,9 +276,7 @@ async function build(): Promise<Compendium> {
     .filter((doc): doc is BreachDoc => Boolean(doc) && (doc as BreachDoc).kind === 'entrada')
     .map(cartaoDe);
 
-  const cofre = acervo.has(`${META_DIR}/cofre.json`)
-    ? await readMarkdown(`${META_DIR}/cofre.json`).catch(() => null)
-    : null;
+  const cofre = lerDocumentoDoCofre(raws.get(CAMINHO_COFRE) ?? '');
 
   const entryDocs = docs.filter((doc) => doc.kind === 'entrada' || doc.kind === 'narrativa');
   const dates = docs.map((doc) => doc.updatedAt).filter((date): date is string => Boolean(date));

@@ -11,6 +11,7 @@ import {
   listarArvore,
   type Mudanca,
 } from '@/lib/breach/github';
+import { comDiario } from '@/lib/breach/diario';
 import { withBase } from '@/lib/breach/slug';
 
 /**
@@ -61,7 +62,8 @@ function Criar() {
     setGravando(true);
     setErro('');
     try {
-      await commitarArvore(mudancas, mensagem, token);
+      const comRegistro = await comDiario(mudancas, mensagem, token, { acao: 'criação', principal: destino });
+      await commitarArvore(comRegistro, mensagem, token);
       // Documento aberto é documento para escrever: vai direto para a edição.
       window.location.href = `${withBase('/editar/')}?doc=${encodeURIComponent(destino)}`;
     } catch (error: unknown) {
