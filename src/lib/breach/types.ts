@@ -1,6 +1,6 @@
 import type { Era, EraRef } from './linhaDoTempo';
 import type { Cartao, Grafo, Ilustracao, Personagem, Reino } from './mundo';
-import type { RaizDoAcervo } from '@/lib/thalae/raizes';
+import type { NomeDoAcervo, RaizDoAcervo } from '@/lib/thalae/raizes';
 
 /**
  * Modelo de dados do Compêndio Breach.
@@ -206,6 +206,8 @@ export interface Compendium {
   leitura: Cartao[];
   /** As raízes da Thalae listadas no acervo. */
   raizes: RaizDoAcervo[];
+  /** Os nomes em Thalae registrados, com as raízes de cada um. */
+  nomesThalae: NomeDoAcervo[];
   /** O cofre do modo administrador (`00-meta/cofre.json`), quando existe. */
   cofre: string | null;
   /** Contradições em aberto declaradas no índice canônico. */

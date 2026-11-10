@@ -98,7 +98,8 @@ export function lerRaizes(markdown: string): RaizDoAcervo[] {
   const raizes: RaizDoAcervo[] = [];
   let grupo = '';
   for (const linha of linhas.slice(inicio + 1)) {
-    if (/^##\s+/.test(linha)) break;
+    // A tabela de raízes acaba onde começa a subseção da ordem (§5.1).
+    if (/^#{2,3}\s+/.test(linha)) break;
     const titulo = /^\*\*([^*]+)\*\*\s*$/.exec(linha.trim());
     if (titulo) {
       grupo = titulo[1].trim();
@@ -114,4 +115,63 @@ export function lerRaizes(markdown: string): RaizDoAcervo[] {
     }
   }
   return raizes;
+}
+
+export interface NomeDoAcervo {
+  nome: string;
+  raizes: string[];
+  sentido: string;
+  /** Caminho do áudio no acervo, quando a tabela de pronúncias tem o nome. */
+  audio: string | null;
+}
+
+const semMarcas = (texto: string): string =>
+  texto.normalize('NFD').replace(/[̀-ͯ’'·\-\s]/g, '').toLowerCase();
+
+/**
+ * Os nomes registrados, com as raízes de cada um: a tabela de
+ * `01-cosmologia/thalae/` §5.1 (`| Nome | Raízes | Sentido … |`), casada com a
+ * tabela de pronúncias pelo nome.
+ */
+export function lerNomes(markdown: string): NomeDoAcervo[] {
+  const linhas = markdown.split('\n');
+
+  // Nome → áudio da fala, tirado de `| Palavra | [fala](arquivo.mp3) | … |`.
+  const audios = new Map<string, string>();
+  for (const linha of linhas) {
+    const m = /^\|\s*([^|]+?)\s*\|\s*\[[^\]]*\]\(([^)]+\.mp3)\)/.exec(linha);
+    if (!m) continue;
+    for (const parte of m[1].split(/[()]/)) {
+      if (parte.trim()) audios.set(semMarcas(parte), m[2]);
+    }
+  }
+
+  const inicio = linhas.findIndex((linha) => /^###\s+5\.1\b/.test(linha));
+  if (inicio === -1) return [];
+  const nomes: NomeDoAcervo[] = [];
+  for (const linha of linhas.slice(inicio + 1)) {
+    if (/^#{2,3}\s/.test(linha)) break;
+    if (!linha.trim().startsWith('|')) continue;
+    const c = linha.trim().replace(/^\||\|$/g, '').split('|').map((x) => x.trim());
+    if (c.length < 3 || /^:?-+:?$/.test(c[0]) || /^nome$/i.test(c[0])) continue;
+    const nome = c[0].replace(/[*`]/g, '');
+    nomes.push({
+      nome,
+      raizes: c[1].split('·').map((r) => r.replace(/[*`]/g, '').trim()).filter(Boolean),
+      sentido: c[2].replace(/["“”*]/g, ''),
+      audio: audios.get(semMarcas(nome)) ?? null,
+    });
+  }
+  return nomes;
+}
+
+/** A raiz do acervo que uma raiz escrita num nome usa: `’ìir` → `ir`. */
+export function raizBase(escrita: string, raizes: RaizDoAcervo[]): RaizDoAcervo | null {
+  const alvo = semMarcas(escrita);
+  const juntar = (t: string): string => t.replace(/([aeiou])\1/g, '$1');
+  return (
+    raizes.find((r) => semMarcas(r.texto) === alvo) ??
+    raizes.find((r) => juntar(semMarcas(r.texto)) === juntar(alvo)) ??
+    null
+  );
 }

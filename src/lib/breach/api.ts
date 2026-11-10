@@ -37,7 +37,7 @@ import {
   cartaoDe, definirOrdemDasEras, montarGaleria, montarGrafo, montarPersonagens, montarReinos,
   referenciasDe,
 } from './mundo';
-import { lerRaizes } from '@/lib/thalae/raizes';
+import { lerNomes, lerRaizes } from '@/lib/thalae/raizes';
 import { CAMINHO_COFRE, lerDocumentoDoCofre } from './cofre';
 
 /** Arquivos que não viram página. O README da raiz vira a página inicial. */
@@ -299,6 +299,7 @@ async function build(): Promise<Compendium> {
     galeria: montarGaleria(todos, docs, raws),
     leitura,
     raizes: lerRaizes(raws.get('01-cosmologia/thalae/README.md') ?? ''),
+    nomesThalae: lerNomes(raws.get('01-cosmologia/thalae/README.md') ?? ''),
     cofre,
     contradictions,
     stats: {

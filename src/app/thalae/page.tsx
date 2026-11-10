@@ -6,6 +6,7 @@ import { Selo } from '@/components/thalae/Selo';
 import { LeitorDeSelo } from '@/components/thalae/LeitorDeSelo';
 import { Exercicio } from '@/components/thalae/Exercicio';
 import { Oficina } from '@/components/thalae/Oficina';
+import { Dicionario } from '@/components/thalae/Dicionario';
 import { getCompendium } from '@/lib/breach/api';
 import { EXERCICIO, PALAVRAS, audioDaThalae } from '@/lib/thalae/palavras';
 import type { Raiz } from '@/lib/thalae/selo';
@@ -52,10 +53,11 @@ const ITENS: TocItem[] = [
   { id: 'leitura', label: 'Ler um selo', level: 2 },
   { id: 'exercicio', label: 'Exercício', level: 2 },
   { id: 'oficina', label: 'Oficina de nomes', level: 2 },
+  { id: 'dicionario', label: 'Dicionário', level: 2 },
 ];
 
 export default async function AprenderThalaePage() {
-  const { raizes } = await getCompendium();
+  const { raizes, nomesThalae } = await getCompendium();
   return (
     <div>
       <PageHead
@@ -239,6 +241,15 @@ export default async function AprenderThalaePage() {
             </p>
           </section>
           <Oficina raizes={raizes} />
+
+          <section id="dicionario">
+            <h2>Dicionário</h2>
+            <p>
+              Todo nome em Thalae registrado no acervo, com as raízes de que é feito e o selo que elas desenham. Sai
+              direto do documento da língua: nome novo lá aparece aqui.
+            </p>
+          </section>
+          <Dicionario nomes={nomesThalae} raizes={raizes} />
         </article>
 
         <Toc items={ITENS} />
