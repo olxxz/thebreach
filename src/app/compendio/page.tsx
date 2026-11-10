@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { AlertTriangle, ScrollText } from 'lucide-react';
-import { getCompendium } from '@/lib/breach/api';
+import { getCompendium, getGeradoEm } from '@/lib/breach/api';
+import { EditarLink } from '@/components/EditarLink';
+import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 import { ordenarPorImpacto } from '@/lib/breach/lacunas';
 import { Chip, PageHead } from '@/components/content';
 
@@ -12,6 +14,8 @@ export const metadata: Metadata = {
 
 export default async function CompendiumPage() {
   const compendium = await getCompendium();
+  const geradoEm = await getGeradoEm();
+  const publicos = compendium.docs.map((d) => d.path);
 
   const grouped = compendium.index.reduce<Map<string, typeof compendium.index>>((map, entry) => {
     const list = map.get(entry.categoria) ?? [];
@@ -32,7 +36,13 @@ export default async function CompendiumPage() {
           <Chip label="Contradições" value={String(compendium.contradictions.length)} />
           <Chip label="Lacunas prioritárias" value={String(compendium.priorityGaps.length)} />
         </div>
+        <div className="pagehead__acoes">
+          <EditarLink path="00-meta/INDICE-CANONICO.md" />
+        </div>
       </PageHead>
+      <AlternarAtelie path="00-meta/INDICE-CANONICO.md" publicos={publicos} geradoEm={geradoEm}>
+        {null}
+      </AlternarAtelie>
 
       {[...grouped.entries()].map(([categoria, entries]) => (
         <section key={categoria}>

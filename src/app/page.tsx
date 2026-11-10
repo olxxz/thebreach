@@ -2,7 +2,9 @@ import Link from 'next/link';
 import {
   ArrowRight, BookOpen, Castle, History, Hourglass, Images, Languages, Share2, Users,
 } from 'lucide-react';
-import { getCompendium } from '@/lib/breach/api';
+import { getCompendium, getGeradoEm } from '@/lib/breach/api';
+import { EditarLink } from '@/components/EditarLink';
+import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 import { Hero, PageHead } from '@/components/content';
 import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 
@@ -16,6 +18,8 @@ export default async function HomePage() {
   const compendium = await getCompendium();
   const { readme, reinos, personagens } = compendium;
   const ultima = compendium.changelog[0];
+  const geradoEm = await getGeradoEm();
+  const publicos = compendium.docs.map((doc) => doc.path);
 
   return (
     <div className="stack inicio">
@@ -24,9 +28,14 @@ export default async function HomePage() {
       ) : null}
 
       <PageHead eyebrow="Acervo de um universo em construção" title={readme?.title ?? 'Compêndio Breach'}>
-        {readme?.introHtml ? (
-          <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: readme.introHtml }} />
-        ) : null}
+        <div className="pagehead__acoes">
+          <EditarLink path="README.md" />
+        </div>
+        <AlternarAtelie path="README.md" publicos={publicos} geradoEm={geradoEm}>
+          {readme?.introHtml ? (
+            <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: readme.introHtml }} />
+          ) : null}
+        </AlternarAtelie>
       </PageHead>
 
       <section className="entradas" aria-label="Por onde começar">

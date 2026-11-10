@@ -10,9 +10,12 @@ import { EditarLink } from '@/components/EditarLink';
 import { listarArvore, lerArquivo } from '@/lib/breach/github';
 import { labelFromPath } from '@/lib/breach/slug';
 import { rotaNoAtelie, VersaoCompleta } from './VersaoCompleta';
+import { useGravados } from '@/hooks/useGravados';
+import { haQuantoTempo } from '@/lib/breach/recentes';
 
 interface Props {
   publicos: string[];
+  geradoEm: string;
 }
 
 /** O título de um documento: a primeira linha `# `. */
@@ -21,14 +24,20 @@ function tituloDe(bruto: string, path: string): string {
 }
 
 /** Grupo de um documento na lista: a pasta de categoria, ou o 00-meta. */
-function grupoDe(path: string): string {
+function grupoDe(path: string, novos: ReadonlySet<string> = new Set()): string {
+  if (novos.has(path)) return 'Novos, ainda não publicados';
   if (path.startsWith('10-propostas/')) return 'Propostas';
   if (path.startsWith('00-meta/')) return 'Bastidores do acervo';
   return 'Só lacunas ou propostas';
 }
 
-function Lista({ publicos }: Props) {
+function Lista({ publicos, geradoEm }: Props) {
   const { token } = useAppearance();
+  const gravados = useGravados(geradoEm, true);
+  const novos = useMemo(
+    () => new Set(gravados.filter(({ path }) => !publicos.includes(path)).map(({ path }) => path)),
+    [gravados, publicos],
+  );
   const [docs, setDocs] = useState<string[] | null>(null);
   const [erro, setErro] = useState('');
 
@@ -49,9 +58,9 @@ function Lista({ publicos }: Props) {
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, string[]>();
-    for (const doc of docs ?? []) mapa.set(grupoDe(doc), [...(mapa.get(grupoDe(doc)) ?? []), doc]);
-    return [...mapa];
-  }, [docs]);
+    for (const doc of docs ?? []) mapa.set(grupoDe(doc, novos), [...(mapa.get(grupoDe(doc, novos)) ?? []), doc]);
+    return [...mapa].sort(([a], [b]) => (a.startsWith('Novos') ? -1 : b.startsWith('Novos') ? 1 : 0));
+  }, [docs, novos]);
 
   if (erro) return <p className="editor__estado editor__estado--erro">{erro}</p>;
   if (!docs) return <p className="atelie__aviso">Lendo o acervo…</p>;
@@ -78,8 +87,9 @@ function Lista({ publicos }: Props) {
   );
 }
 
-function Documento({ path, publicos }: { path: string; publicos: string[] }) {
+function Documento({ path, publicos, geradoEm }: { path: string; publicos: string[]; geradoEm: string }) {
   const { token } = useAppearance();
+  const provisorio = useGravados(geradoEm, true).find((item) => item.path === path)?.gravado ?? null;
   const [bruto, setBruto] = useState<string | null>(null);
   const [erro, setErro] = useState('');
 
@@ -98,16 +108,21 @@ function Documento({ path, publicos }: { path: string; publicos: string[] }) {
           <EditarLink path={path} />
         </div>
       </PageHead>
-      {erro ? (
+      {provisorio ? (
+        <p className="atelie__faixa atelie__faixa--provisorio">
+          <strong>Provisório.</strong>&nbsp;Gravado {haQuantoTempo(provisorio.em)}; o site ainda não publicou.
+        </p>
+      ) : null}
+      {erro && !provisorio ? (
         <p className="editor__estado editor__estado--erro">{erro}</p>
       ) : (
-        <VersaoCompleta path={path} publicos={new Set(publicos)} bruto={bruto} />
+        <VersaoCompleta path={path} publicos={new Set(publicos)} bruto={bruto ?? provisorio?.conteudo ?? null} />
       )}
     </div>
   );
 }
 
-function Conteudo({ publicos }: Props) {
+function Conteudo({ publicos, geradoEm }: Props) {
   const { admin } = useAppearance();
   const path = useSearchParams().get('d') ?? '';
 
@@ -121,7 +136,7 @@ function Conteudo({ publicos }: Props) {
       </PageHead>
     );
   }
-  if (path) return <Documento path={path} publicos={publicos} />;
+  if (path) return <Documento path={path} publicos={publicos} geradoEm={geradoEm} />;
   return (
     <div>
       <PageHead eyebrow="Ateliê" title="Ateliê">
@@ -130,15 +145,15 @@ function Conteudo({ publicos }: Props) {
           do acervo. Nada daqui vai para o site público.
         </p>
       </PageHead>
-      <Lista publicos={publicos} />
+      <Lista publicos={publicos} geradoEm={geradoEm} />
     </div>
   );
 }
 
-export function PaginaDoAtelie({ publicos }: Props) {
+export function PaginaDoAtelie({ publicos, geradoEm }: Props) {
   return (
     <Suspense fallback={<PageHead eyebrow="Ateliê" title="Ateliê" />}>
-      <Conteudo publicos={publicos} />
+      <Conteudo publicos={publicos} geradoEm={geradoEm} />
     </Suspense>
   );
 }

@@ -85,6 +85,14 @@ no acervo na hora, com o token.
 
 `[EM ABERTO]` é público: o que o Criador deixou aberto de propósito.
 
+**Provisório.** O que se grava ou cria no Ateliê fica guardado no navegador
+(`recentes.ts`) até o site publicar: toma o lugar da página antiga (com a
+troca Público / Ateliê), aparece num bloco "Provisórios" da navegação e no
+topo da busca, e o documento novo abre pelo Ateliê. Some sozinho quando a
+publicação alcançar, ou em "Dispensar". Todas as páginas que vêm de um
+documento têm "Editar": a home (o `README.md` da raiz), as categorias, a linha
+do tempo, as convenções, o índice e o registro.
+
 ## O layout
 
 Uma coluna de leitura estreita em tipografia serifada — Cormorant Garamond nos

@@ -10,7 +10,6 @@ import { Crumbs, DocArticle, Hero, PageHead } from '@/components/content';
 import { CriarLink } from '@/components/CriarLink';
 import { EditarLink } from '@/components/EditarLink';
 import { ContinuarLeitura } from '@/components/ContinuarLeitura';
-import { Recente } from '@/components/Recente';
 import { podeConterEntidades } from '@/lib/breach/slug';
 import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 
@@ -48,7 +47,9 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
   ]);
   const chegam = await getRelacoesQueChegam(doc.path);
   const publicos = (await getCompendium()).docs.map((outro) => outro.path);
-  if (doc.path === CAMINHO_LINHA_DO_TEMPO) return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} />;
+  if (doc.path === CAMINHO_LINHA_DO_TEMPO) {
+    return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} publicos={publicos} geradoEm={geradoEm} />;
+  }
   const eyebrow = doc.header.subtipo
     ? `${category.title} › ${doc.header.subtipo}`
     : doc.kind === 'narrativa'
@@ -87,8 +88,7 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
           ) : null}
         </div>
       </PageHead>
-      <Recente path={doc.path} geradoEm={geradoEm} />
-      <AlternarAtelie path={doc.path} publicos={publicos}>
+      <AlternarAtelie path={doc.path} publicos={publicos} geradoEm={geradoEm}>
         <DocArticle doc={doc} backlinks={backlinks} eras={eras} chegam={chegam} />
       </AlternarAtelie>
       {leitura ? <ContinuarLeitura {...leitura} /> : null}
@@ -100,16 +100,31 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
  * A linha do tempo tem página própria: em vez das seções do documento, as eras
  * numa coluna, com os documentos de cada uma.
  */
-async function PaginaDaLinhaDoTempo({ titulo, intro }: { titulo: string; intro: string }) {
+async function PaginaDaLinhaDoTempo({
+  titulo,
+  intro,
+  publicos,
+  geradoEm,
+}: {
+  titulo: string;
+  intro: string;
+  publicos: string[];
+  geradoEm: string;
+}) {
   const compendium = await getCompendium();
   return (
     <div>
       <Crumbs trail={[{ href: '/', label: 'Compêndio' }, { href: '/c/historia', label: 'História' }, { label: titulo }]} />
       <PageHead eyebrow="Ler em ordem" title={titulo}>
         {intro ? <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: intro }} /> : null}
+        <div className="pagehead__acoes">
+          <EditarLink path={CAMINHO_LINHA_DO_TEMPO} />
+        </div>
       </PageHead>
-      <FaixaDeEras eras={compendium.eras} naPropriaPagina />
-      <LinhaDoTempo eras={compendium.eras} docs={compendium.docs} categories={compendium.categories} />
+      <AlternarAtelie path={CAMINHO_LINHA_DO_TEMPO} publicos={publicos} geradoEm={geradoEm}>
+        <FaixaDeEras eras={compendium.eras} naPropriaPagina />
+        <LinhaDoTempo eras={compendium.eras} docs={compendium.docs} categories={compendium.categories} />
+      </AlternarAtelie>
     </div>
   );
 }

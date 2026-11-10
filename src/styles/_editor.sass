@@ -51,6 +51,34 @@
 .atelie__conta
   flex: 1 1 14rem
 
+// Provisório: gravado e ainda não publicado. Ouro suave, a cor do "ainda".
+.atelie__faixa--provisorio
+  border-color: var(--m-canonico-bd)
+  background: var(--gold-soft)
+  color: var(--m-canonico-fg)
+
+  .atelie__troca
+    border-color: var(--m-canonico-bd)
+
+    button[aria-pressed='true']
+      background: var(--m-canonico-fg)
+
+.atelie__link
+  padding: 0
+  border: 0
+  background: none
+  color: inherit
+  font: inherit
+  text-decoration: underline
+  text-underline-offset: 3px
+  cursor: pointer
+
+.railnav__group--provisorio .railnav__item
+  color: var(--m-canonico-fg)
+
+  svg
+    flex: none
+
 .atelie__troca
   display: inline-flex
   border: 1px solid var(--m-proposta-bd)

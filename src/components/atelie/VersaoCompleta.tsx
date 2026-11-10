@@ -7,6 +7,7 @@ import { semCabecalho } from '@/lib/breach/cabecalho';
 import { lerArquivo, lerMidia } from '@/lib/breach/github';
 import { BASE_PATH } from '@/lib/breach/slug';
 import { renderMarkdown } from '@/lib/breach/markdown';
+import { paraPublico } from '@/lib/breach/publico';
 
 interface Props {
   /** Caminho do documento no acervo. */
@@ -15,6 +16,8 @@ interface Props {
   publicos: ReadonlySet<string>;
   /** Markdown já lido, quando quem chama já o tem. */
   bruto?: string | null;
+  /** Mostrar só o que o público verá deste texto (sem propostas nem lacunas). */
+  publico?: boolean;
 }
 
 const PREFIXO_MIDIA = `${BASE_PATH}/acervo/`;
@@ -33,7 +36,7 @@ export function rotaNoAtelie(path: string): string {
  * copiou é buscada no acervo na hora, e o link para um documento que o
  * público não vê leva a ele dentro do Ateliê.
  */
-export function VersaoCompleta({ path, publicos, bruto: brutoDado = null }: Props) {
+export function VersaoCompleta({ path, publicos, bruto: brutoDado = null, publico = false }: Props) {
   const { token } = useAppearance();
   const router = useRouter();
   const [bruto, setBruto] = useState<string | null>(brutoDado);
@@ -61,13 +64,15 @@ export function VersaoCompleta({ path, publicos, bruto: brutoDado = null }: Prop
   useEffect(() => {
     if (bruto === null) return;
     let cancelado = false;
-    renderMarkdown(semCabecalho(bruto), path)
+    const texto = publico ? paraPublico(bruto, path).texto : bruto;
+    // O título já está no topo da página: não repetir o `# ` do documento.
+    renderMarkdown(semCabecalho(texto).replace(/^\s*#\s+[^\n]*\n/, ''), path)
       .then((saida) => !cancelado && setHtml(saida))
       .catch(() => !cancelado && setErro('Não deu para renderizar este documento.'));
     return () => {
       cancelado = true;
     };
-  }, [bruto, path]);
+  }, [bruto, path, publico]);
 
   // Mídia do Ateliê: a imagem que falha no site é buscada no acervo.
   useEffect(() => {

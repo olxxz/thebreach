@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BookOpen, Castle, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
+  BookOpen, Castle, Clock, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
   Feather, PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2,
   Stamp, Sun, Users, X,
 } from 'lucide-react';
@@ -21,6 +21,9 @@ import { useArrastoGavetas } from '@/hooks/useArrastoGavetas';
 import { useAtalhos } from '@/hooks/useAtalhos';
 import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
 import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
+import { useGravados } from '@/hooks/useGravados';
+import { tituloDoGravado } from '@/lib/breach/recentes';
+import { hrefForPath } from '@/lib/breach/slug';
 
 export type { NavCategory, NavDoc };
 
@@ -30,6 +33,10 @@ interface Props {
   eras: Array<{ id: string; titulo: string }>;
   /** O cofre do Ateliê publicado no acervo, quando há um. */
   cofre: string | null;
+  /** Instante em que o site foi construído: o que foi gravado depois é provisório. */
+  geradoEm: string;
+  /** Os documentos que o público vê. */
+  publicos: string[];
   repoUrl: string;
   children: React.ReactNode;
 }
@@ -53,11 +60,44 @@ const META = [
 
 const MAIN_LINKS = [...EXPLORAR, ...META];
 
-export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }: Props) {
+export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, repoUrl, children }: Props) {
   const pathname = usePathname();
   const {
     theme, toggleTheme, nav: navMode, setNav, drawer, setDrawer, tools, toggleTools, admin,
   } = useAppearance();
+
+  // O que este navegador gravou e o site ainda não publicou: aparece na
+  // navegação e na busca até a publicação alcançar.
+  const gravados = useGravados(geradoEm, admin);
+  const provisorios = useMemo(() => {
+    const conhecidos = new Set(publicos);
+    return gravados.map(({ path, gravado }) => {
+      const rota = conhecidos.has(path) ? hrefForPath(path) : null;
+      return {
+        path,
+        titulo: tituloDoGravado(gravado.conteudo, path),
+        novo: Boolean(gravado.novo) || !conhecidos.has(path),
+        href: rota ?? `/atelie?d=${encodeURIComponent(path)}`,
+        conteudo: gravado.conteudo,
+      };
+    });
+  }, [gravados, publicos]);
+  const registrosDaBusca = useMemo(() => {
+    if (provisorios.length === 0) return searchRecords;
+    const trocados = new Set(provisorios.map((item) => item.href));
+    const novos: SearchRecord[] = provisorios.map((item) => ({
+      title: `${item.titulo} · provisório`,
+      href: item.href,
+      categoria: 'Provisório',
+      subtipo: null,
+      excerpt: toPlainTextLeve(item.conteudo).slice(0, 220),
+      headings: [...item.conteudo.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => m[1]).join(' '),
+      body: toPlainTextLeve(item.conteudo),
+      capa: null,
+      eras: [],
+    }));
+    return [...novos, ...searchRecords.filter((record) => !trocados.has(record.href))];
+  }, [provisorios, searchRecords]);
   const [search, setSearch] = useState(false);
   const [tokenDialog, setTokenDialog] = useState(false);
   const wide = useMedia('(min-width: 72rem)');
@@ -291,6 +331,23 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
             </ul>
           </div>
 
+          {provisorios.length > 0 ? (
+            <div className="railnav__group railnav__group--provisorio">
+              <p className="railnav__title">Provisórios</p>
+              <ul className="railnav__list">
+                {provisorios.map((item) => (
+                  <li key={item.path}>
+                    <Link className="railnav__item" href={item.href} title={`${item.path} — gravado, o site ainda não publicou`}>
+                      <Clock size={16} aria-hidden="true" />
+                      <span>{item.titulo}</span>
+                      <span className="railnav__count">{item.novo ? 'novo' : 'editado'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="railnav__group">
             <p className="railnav__title">Categorias</p>
             <ul className="railnav__list">
@@ -446,8 +503,19 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         </button>
       </nav>
 
-      <SearchDialog records={searchRecords} eras={eras} open={search} onClose={() => setSearch(false)} />
+      <SearchDialog records={registrosDaBusca} eras={eras} open={search} onClose={() => setSearch(false)} />
       <TokenDialog open={tokenDialog} onClose={() => setTokenDialog(false)} cofre={cofre} />
     </div>
   );
+}
+
+/** Texto corrido de um markdown, sem o pipeline inteiro: basta para a busca. */
+function toPlainTextLeve(markdown: string): string {
+  return markdown
+    .replace(/^\*\*[^*]+:\*\*.*$/gm, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[`*_>#|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

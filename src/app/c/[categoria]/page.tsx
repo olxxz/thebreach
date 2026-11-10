@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { FolderOpen, ScrollText } from 'lucide-react';
-import { getCategories, getCategory, getCompendium, getResumos } from '@/lib/breach/api';
+import { getCategories, getCategory, getCompendium, getGeradoEm, getResumos } from '@/lib/breach/api';
 import { ListaDeDocumentos } from '@/components/ListaDeDocumentos';
 import { Chip, Crumbs, Hero, PageHead } from '@/components/content';
 import { CriarLink } from '@/components/CriarLink';
 import { EditarLink } from '@/components/EditarLink';
+import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 
 type Params = { categoria: string };
 
@@ -25,7 +26,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const { categoria } = await params;
   const category = await getCategory(categoria);
   if (!category) notFound();
-  const [resumos, { eras }] = await Promise.all([getResumos(category.tree), getCompendium()]);
+  const [resumos, { eras, docs }, geradoEm] = await Promise.all([getResumos(category.tree), getCompendium(), getGeradoEm()]);
 
   return (
     <div className="stack">
@@ -49,6 +50,9 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
             <CriarLink pasta={category.dir} />
           </div>
         </PageHead>
+        <AlternarAtelie path={`${category.dir}/README.md`} publicos={docs.map((doc) => doc.path)} geradoEm={geradoEm}>
+          {null}
+        </AlternarAtelie>
       </div>
 
       <section>

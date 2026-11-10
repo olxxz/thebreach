@@ -4,7 +4,7 @@ import { AppearanceProvider } from '@/components/AppearanceProvider';
 import { AppShell, type NavCategory, type NavDoc } from '@/components/AppShell';
 import { Pronuncia } from '@/components/Pronuncia';
 import type { DocNode } from '@/lib/breach/types';
-import { getCompendium, getSearchIndex } from '@/lib/breach/api';
+import { getCompendium, getSearchIndex, getGeradoEm } from '@/lib/breach/api';
 import { DEFAULT_NAV, DEFAULT_TOOLS, STORAGE_KEYS } from '@/lib/layouts';
 import { BASE_PATH } from '@/lib/breach/slug';
 import '@/styles/main.sass';
@@ -111,6 +111,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             eras={compendium.eras.map(({ id, titulo }) => ({ id, titulo }))}
             repoUrl={compendium.source.url}
             cofre={compendium.cofre}
+            geradoEm={await getGeradoEm()}
+            publicos={compendium.docs.map((doc) => doc.path)}
           >
             {children}
           </AppShell>
