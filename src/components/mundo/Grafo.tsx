@@ -261,6 +261,10 @@ export function Grafo({ grafo, categorias, eras }: Props) {
 
   return (
     <div className="grafo">
+      <section className="grafo__filtros" aria-label="Filtros do desenho">
+      <h1 className="grafo__nome">Relações</h1>
+      <p className="grafo__dica">Quem se liga a quem, pelas citações entre os documentos. Arraste, aproxime, toque num ponto.</p>
+      <p className="grafo__rotulo">Categorias</p>
       <div className="filtros" role="group" aria-label="Categorias no desenho">
         {presentes.map((c) => (
           <button
@@ -283,6 +287,8 @@ export function Grafo({ grafo, categorias, eras }: Props) {
         ))}
       </div>
       {eras.length > 0 ? (
+        <>
+        <p className="grafo__rotulo">Era</p>
         <div className="filtros" role="group" aria-label="Era">
           <button type="button" className="filtro" aria-pressed={era === null} onClick={() => setEra(null)}>
             Todas as eras
@@ -299,7 +305,9 @@ export function Grafo({ grafo, categorias, eras }: Props) {
             </button>
           ))}
         </div>
+        </>
       ) : null}
+      </section>
 
       <div className="grafo__bancada">
         <div className="grafo__quadro">
@@ -379,7 +387,7 @@ export function Grafo({ grafo, categorias, eras }: Props) {
           </div>
         </div>
 
-        <aside className="grafo__painel" aria-live="polite">
+        <aside className="grafo__painel" aria-live="polite" data-escolhido={escolhido ? "sim" : "nao"}>
           {escolhido ? (
             <>
               {escolhido.capa ? (

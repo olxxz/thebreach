@@ -28,8 +28,6 @@ interface Props {
   onTexto: (bruto: string) => void;
   /** Insere um trecho na posição do cursor da área de texto. */
   onInserir: (trecho: string) => void;
-  /** Abre a mudança de caminho, para um documento solto virar entidade. */
-  onVirarEntidade: () => void;
 }
 
 /** A extensão do arquivo, em minúsculas e sem o ponto. */
@@ -58,16 +56,16 @@ export function Ilustracoes({
   onPendentes,
   onTexto,
   onInserir,
-  onVirarEntidade,
 }: Props) {
   const [erro, setErro] = useState('');
   const heroInput = useRef<HTMLInputElement>(null);
   const outraInput = useRef<HTMLInputElement>(null);
 
-  // Hero é ilustração de entidade, e entidade é pasta (§6 e §8): um documento
-  // solto não tem onde guardar o dele.
+  // Hero é ilustração de entidade, e entidade é pasta (§6 e §8). Documento
+  // solto vira entidade sozinho: as imagens já vão para a pasta que ele vai
+  // ter, e o editor faz a mudança `x.md` → `x/README.md` no mesmo commit.
   const ehEntidade = /(^|\/)README\.md$/i.test(path);
-  const pasta = pastaDe(path);
+  const pasta = pastaDe(caminhoDeEntidade(path));
 
   const heroAtual = arquivos
     ? EXTENSOES.map((ext) => `${pasta ? `${pasta}/` : ''}${NOME_HERO}.${ext}`).find((c) =>
@@ -111,27 +109,18 @@ export function Ilustracoes({
     }
   };
 
-  if (!ehEntidade) {
-    return (
-      <div className="painel__corpo">
-        <p className="editor__dica">
-          Pelo §8, a ilustração de abertura é de uma <strong>entidade</strong>, e pelo §6 entidade é
-          pasta. Este documento é um arquivo solto: não há pasta dele onde a imagem possa morar.
-        </p>
-        <button type="button" className="editor__botao" onClick={onVirarEntidade}>
-          Transformar em entidade
-        </button>
-        <p className="editor__dica">
-          <code>{path}</code> viraria <code>{path.replace(/\.md$/i, '/README.md')}</code>, com as
-          citações acertadas no mesmo commit.
-        </p>
-      </div>
-    );
-  }
+
+  const aviso = ehEntidade ? null : (
+    <p className="editor__dica">
+      Documento solto: ao gravar com ilustração, <code>{path}</code> vira{' '}
+      <code>{caminhoDeEntidade(path)}</code>, com as imagens na pasta e as citações acertadas no mesmo commit.
+    </p>
+  );
 
   return (
     <div className="painel__corpo">
       {erro ? <p className="editor__estado editor__estado--erro">{erro}</p> : null}
+      {aviso}
 
       <div className="editor__acoes">
         <button type="button" className="editor__botao" onClick={() => heroInput.current?.click()}>
@@ -193,6 +182,11 @@ export function Ilustracoes({
  * mesmo commit: `ilustracaoDe` escolhe por ordem de extensão, e um `hero.png`
  * esquecido venceria o `hero.webp` novo.
  */
+/** Onde o documento mora como entidade: `x.md` → `x/README.md`. */
+export function caminhoDeEntidade(path: string): string {
+  return /(^|\/)README\.md$/i.test(path) ? path : path.replace(/\.md$/i, '/README.md');
+}
+
 export function mudancasDeImagem(pendentes: ImagemPronta[], heroAtual: string | null): Mudanca[] {
   const mudancas: Mudanca[] = pendentes.map((imagem) => ({
     tipo: 'binario' as const,

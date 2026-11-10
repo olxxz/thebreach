@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, ClipboardList, FolderInput, GitCompare, ImagePlus, Save, X } from 'lucide-react';
 import { PageHead } from '@/components/content';
 import { Cabecalho } from '@/components/Cabecalho';
 import { DiffView } from '@/components/DiffView';
-import { Ilustracoes, mudancasDeImagem, type ImagemPronta } from '@/components/Ilustracoes';
+import { Ilustracoes, caminhoDeEntidade, mudancasDeImagem, type ImagemPronta } from '@/components/Ilustracoes';
 import { MudarCaminho } from '@/components/MudarCaminho';
 import { Previa } from '@/components/Previa';
 import { EditorVisual, type EditorVisualRef } from '@/components/EditorVisual';
@@ -31,7 +32,10 @@ import {
 } from '@/lib/breach/rascunho';
 import { EXTENSOES, NOME_HERO, pastaDe } from '@/lib/breach/imagens';
 import { registrarGravado } from '@/lib/breach/recentes';
-import { parseCategoryDir } from '@/lib/breach/slug';
+import { hrefForPath, parseCategoryDir, withBase } from '@/lib/breach/slug';
+import { planejarMudanca } from '@/lib/breach/mover';
+import { explicarMudanca } from '@/lib/breach/explicar';
+import { tituloDoGravado } from '@/lib/breach/recentes';
 
 /** O documento está aberto para edição, ou não chegou a abrir. */
 type Estado = 'carregando' | 'aberto' | 'inacessivel';
@@ -79,8 +83,11 @@ function Editor() {
   const [textos, setTextos] = useState<Map<string, string> | null>(null);
   const [lendoAcervo, setLendoAcervo] = useState(false);
   const [imagens, setImagens] = useState<ImagemPronta[]>([]);
-  const [painel, setPainel] = useState<'nenhum' | 'ilustracoes' | 'caminho'>('nenhum');
-  const [sugestaoDeCaminho, setSugestaoDeCaminho] = useState<string | undefined>(undefined);
+  const [painel, setPainel] = useState<'nenhum' | 'ilustracoes' | 'caminho' | 'diff'>('nenhum');
+  /** A ficha (o cabeçalho do documento), recolhida por padrão: o texto é o que importa. */
+  const [fichaAberta, setFichaAberta] = useState(false);
+  /** A janela de gravar: o que mudou, a explicação, a mensagem e a nota. */
+  const [janela, setJanela] = useState(false);
   /** Visual: o documento editado no lugar. Markdown: o texto cru e a prévia. */
   const [modo, setModo] = useState<'visual' | 'markdown'>('visual');
   const visualRef = useRef<EditorVisualRef>(null);
@@ -298,8 +305,9 @@ function Editor() {
    * Lê o markdown do acervo inteiro. Só a mudança de caminho precisa disto —
    * para saber quem cita o que vai sair do lugar não há atalho.
    */
-  const lerAcervo = async (): Promise<void> => {
-    if (!arvore) return;
+  const lerAcervo = async (): Promise<Map<string, string> | null> => {
+    if (!arvore) return null;
+    if (textos) return textos;
     setLendoAcervo(true);
     setErro('');
     try {
@@ -307,9 +315,12 @@ function Editor() {
       const lidos = await Promise.all(
         mds.map(async ([caminho, blobSha]) => [caminho, await lerBlob(blobSha, token)] as const),
       );
-      setTextos(new Map(lidos));
+      const mapa = new Map(lidos);
+      setTextos(mapa);
+      return mapa;
     } catch (error: unknown) {
       setErro(error instanceof GithubApiError ? error.message : 'Falha ao ler o acervo.');
+      return null;
     } finally {
       setLendoAcervo(false);
     }
@@ -348,6 +359,7 @@ function Editor() {
         });
       }
       setGravado(feito);
+      setJanela(false);
       setGravacao('parada');
       setPainel('nenhum');
       setImagens([]);
@@ -388,6 +400,37 @@ function Editor() {
 
     // Com imagem escolhida, o texto e os arquivos entram no mesmo commit: a
     // citação e a imagem que ela cita nunca chegam separadas ao acervo.
+    if (temImagem && viraPasta) {
+      // Documento solto com ilustração: vira entidade no mesmo commit. As
+      // imagens já estão na pasta nova; o texto e as citações de quem o cita
+      // seguem o plano de mudança de caminho.
+      const destino = caminhoDeEntidade(path);
+      const acervoTextos = await lerAcervo();
+      if (!arvore || !acervoTextos) {
+        setErro('Não deu para ler o acervo para virar pasta. Tente de novo.');
+        return;
+      }
+      const comTela = new Map(acervoTextos);
+      comTela.set(path, enviado);
+      const plano = planejarMudanca(path, destino, arvore, comTela);
+      if (plano.erro) {
+        setErro(plano.erro);
+        return;
+      }
+      const mudancas: Mudanca[] = [];
+      for (const { de, para } of plano.arquivos) {
+        if (plano.reescritos.has(para)) continue;
+        const blobSha = arvore.get(de);
+        if (blobSha) mudancas.push({ tipo: 'blob', path: para, sha: blobSha });
+      }
+      for (const [caminho, texto] of plano.reescritos) mudancas.push({ tipo: 'texto', path: caminho, conteudo: texto });
+      for (const { de } of plano.arquivos) mudancas.push({ tipo: 'remover', path: de });
+      mudancas.push(...mudancasDeImagem(imagens, heroAtual));
+      await gravarEmArvore(mudancas, mensagemCompleta, destino);
+      setMensagem('');
+      return;
+    }
+
     if (temImagem) {
       const mudancas: Mudanca[] = [
         { tipo: 'texto', path, conteudo: enviado },
@@ -435,6 +478,7 @@ function Editor() {
       setInsistindo(false);
       apagarRascunho(path);
       setGravado(feito);
+      setJanela(false);
       setGravacao('parada');
     } catch (error: unknown) {
       if (error instanceof GithubApiError && error.conflito) {
@@ -470,86 +514,162 @@ function Editor() {
   const enviando = gravacao === 'enviando';
   const temImagem = imagens.length > 0;
   const morto = mudouDeCaminho !== null;
+  const viraPasta = !/(^|\/)README\.md$/i.test(path);
+  // Com ilustração pendente, um documento solto já se comporta como a pasta
+  // que vai ser: é onde as imagens moram e de onde as citações se resolvem.
+  const caminhoEfetivo = temImagem && viraPasta ? caminhoDeEntidade(path) : path;
   const podeGravar = (sujo || temImagem) && mensagem.trim().length > 0 && !enviando && !morto;
 
   const heroAtual = arquivos
     ? EXTENSOES.map((ext) => {
-        const pasta = pastaDe(path);
+        const pasta = pastaDe(caminhoDeEntidade(path));
         return `${pasta ? `${pasta}/` : ''}${NOME_HERO}.${ext}`;
       }).find((caminho) => arquivos.has(caminho)) ?? null
     : null;
 
+  const explicacao = explicarMudanca(original, paraGravar);
+  const titulo = tituloDoGravado(conteudo || original, path);
+  const rotaDaPagina = hrefForPath(path);
+
+  const abrirJanela = (): void => {
+    if (!mensagem.trim()) setMensagem(explicacao.assunto);
+    setJanela(true);
+  };
+
+  const alternarPainel = (qual: 'ilustracoes' | 'caminho' | 'diff'): void =>
+    setPainel((atual) => (atual === qual ? 'nenhum' : qual));
+
+  const botaoDaBarra = (
+    qual: 'ilustracoes' | 'caminho' | 'diff',
+    rotulo: string,
+    Icone: typeof ImagePlus,
+    desligado = false,
+  ) => (
+    <button
+      type="button"
+      className="editorbar__botao"
+      aria-pressed={painel === qual}
+      onClick={() => alternarPainel(qual)}
+      disabled={desligado}
+      title={rotulo}
+    >
+      <Icone size={16} aria-hidden="true" />
+      <span>{rotulo}</span>
+    </button>
+  );
+
   return (
-    <PageHead eyebrow="Ateliê" title={path}>
-      <div className="editor">
-        {estado === 'carregando' ? <p className="editor__estado">Carregando…</p> : null}
+    <div className="editorpage">
+      <header className="editorbar">
+        <a className="editorbar__voltar" href={rotaDaPagina ? withBase(rotaDaPagina) : withBase('/atelie')} title="Voltar à página">
+          <ArrowLeft size={17} aria-hidden="true" />
+          <span className="editorbar__titulo">
+            {titulo}
+            <code>{caminhoEfetivo}</code>
+          </span>
+        </a>
 
-        {erro ? (
-          <p className="editor__estado editor__estado--erro" role="alert">
-            {erro}
-          </p>
-        ) : null}
+        <div className="editorbar__grupo" role="group" aria-label="Modo de edição">
+          <button type="button" className="editorbar__modo" aria-pressed={modo === 'visual'} onClick={() => escolherModo('visual')}>
+            Visual
+          </button>
+          <button type="button" className="editorbar__modo" aria-pressed={modo === 'markdown'} onClick={() => escolherModo('markdown')}>
+            Markdown
+          </button>
+        </div>
 
-        {morto ? (
-          <p className="editor__gravado">
-            Este documento passou a ser <code>{mudouDeCaminho}</code>. Abrindo o lugar novo…{' '}
-            <a href={`?doc=${encodeURIComponent(mudouDeCaminho ?? '')}`}>ir agora</a>
-          </p>
-        ) : null}
+        <div className="editorbar__acoes">
+          <button
+            type="button"
+            className="editorbar__botao"
+            aria-pressed={fichaAberta}
+            onClick={() => setFichaAberta((atual) => !atual)}
+            title="Ficha do documento: classificação, status, relações"
+          >
+            <ClipboardList size={16} aria-hidden="true" />
+            <span>Ficha</span>
+          </button>
+          {botaoDaBarra('ilustracoes', 'Ilustrações', ImagePlus)}
+          {botaoDaBarra('caminho', 'Mudar caminho', FolderInput)}
+          {botaoDaBarra('diff', 'O que muda', GitCompare, !sujo && !temImagem)}
+          <button
+            type="button"
+            className="editorbar__gravar"
+            onClick={abrirJanela}
+            disabled={(!sujo && !temImagem) || enviando || morto || estado !== 'aberto'}
+          >
+            <Save size={16} aria-hidden="true" />
+            {enviando ? 'Gravando…' : 'Gravar'}
+          </button>
+        </div>
+      </header>
 
-        {estado === 'aberto' && !morto ? (
-          <>
-            {rascunhoAchado ? (
-              <div className="editor__rascunho">
-                <p>
-                  Há um rascunho deste documento, de {quandoFoi(rascunhoAchado.em)}.
-                  {rascunhoAchado.sha !== sha
-                    ? ' O arquivo mudou no GitHub depois que ele foi guardado.'
-                    : ''}
-                </p>
-                <div className="editor__acoes">
-                  <button
-                    type="button"
-                    className="editor__botao"
-                    onClick={() => {
-                      mudar(rascunhoAchado.conteudo);
-                      setMensagem(rascunhoAchado.mensagem);
-                      setRascunhoAchado(null);
-                    }}
-                  >
-                    Recuperar
-                  </button>
-                  <button
-                    type="button"
-                    className="editor__botao editor__botao--fraco"
-                    onClick={() => {
-                      apagarRascunho(path);
-                      setRascunhoAchado(null);
-                    }}
-                  >
-                    Descartar
-                  </button>
-                </div>
+      {estado === 'carregando' ? <p className="editorpage__aviso">Carregando…</p> : null}
+      {erro && !janela ? (
+        <p className="editorpage__aviso editorpage__aviso--erro" role="alert">
+          {erro}
+        </p>
+      ) : null}
+      {morto ? (
+        <p className="editorpage__aviso">
+          Este documento passou a ser <code>{mudouDeCaminho}</code>. Abrindo o lugar novo…{' '}
+          <a href={`?doc=${encodeURIComponent(mudouDeCaminho ?? '')}`}>ir agora</a>
+        </p>
+      ) : null}
+      {gravado && !janela ? (
+        <p className="editorpage__aviso editorpage__aviso--feito">
+          Gravado no acervo.{' '}
+          <a href={gravado.commitUrl} target="_blank" rel="noreferrer">
+            Ver o commit
+          </a>
+          . Até o site publicar, este navegador mostra a versão nova como provisória.
+        </p>
+      ) : null}
+      {rascunhoAchado && estado === 'aberto' && !morto ? (
+        <div className="editorpage__aviso">
+          <span>
+            Há um rascunho deste documento, de {quandoFoi(rascunhoAchado.em)}.
+            {rascunhoAchado.sha !== sha ? ' O arquivo mudou no GitHub depois que ele foi guardado.' : ''}
+          </span>
+          <button
+            type="button"
+            className="editor__botao"
+            onClick={() => {
+              mudar(rascunhoAchado.conteudo);
+              setMensagem(rascunhoAchado.mensagem);
+              setRascunhoAchado(null);
+            }}
+          >
+            Recuperar
+          </button>
+          <button
+            type="button"
+            className="editor__botao editor__botao--fraco"
+            onClick={() => {
+              apagarRascunho(path);
+              setRascunhoAchado(null);
+            }}
+          >
+            Descartar
+          </button>
+        </div>
+      ) : null}
+
+      {estado === 'aberto' && !morto ? (
+        <div className="editorpage__corpo">
+          <div className="editorpage__folha">
+            {fichaAberta ? (
+              <div className="editorpage__ficha">
+                <Cabecalho bruto={conteudo} onChange={mudar} somenteLeitura={enviando} />
               </div>
             ) : null}
-
-            <Cabecalho bruto={conteudo} onChange={mudar} somenteLeitura={enviando} />
-
-            <div className="editor__modos" role="group" aria-label="Modo de edição">
-              <button type="button" aria-pressed={modo === 'visual'} onClick={() => escolherModo('visual')}>
-                Visual
-              </button>
-              <button type="button" aria-pressed={modo === 'markdown'} onClick={() => escolherModo('markdown')}>
-                Markdown
-              </button>
-            </div>
 
             {modo === 'visual' ? (
               <EditorVisual
                 ref={visualRef}
                 texto={conteudo}
                 onChange={mudar}
-                path={path}
+                path={caminhoEfetivo}
                 arquivos={arquivos}
                 pendentes={imagens}
                 somenteLeitura={enviando}
@@ -569,34 +689,23 @@ function Editor() {
                 />
                 <Previa
                   bruto={paraGravar}
-                  path={path}
+                  path={caminhoEfetivo}
                   arquivos={arquivos}
                   pendentes={imagens}
                   folhaRef={folhaRef}
                 />
               </div>
             )}
+          </div>
 
-            <div className="painel">
-              <div className="painel__abas">
-                {(
-                  [
-                    ['ilustracoes', 'Ilustrações'],
-                    ['caminho', 'Mudar de caminho'],
-                  ] as const
-                ).map(([chave, rotulo]) => (
-                  <button
-                    key={chave}
-                    type="button"
-                    className="painel__aba"
-                    data-aberta={painel === chave}
-                    onClick={() => setPainel((atual) => (atual === chave ? 'nenhum' : chave))}
-                  >
-                    {rotulo}
-                  </button>
-                ))}
+          {painel !== 'nenhum' ? (
+            <aside className="editorpage__painel" aria-label="Painel do editor">
+              <div className="editorpage__painel-topo">
+                <p>{painel === 'ilustracoes' ? 'Ilustrações' : painel === 'caminho' ? 'Mudar caminho' : 'O que muda'}</p>
+                <button type="button" className="editorbar__fechar" onClick={() => setPainel('nenhum')} aria-label="Fechar o painel">
+                  <X size={16} aria-hidden="true" />
+                </button>
               </div>
-
               {painel === 'ilustracoes' ? (
                 <Ilustracoes
                   path={path}
@@ -606,16 +715,11 @@ function Editor() {
                   onPendentes={setImagens}
                   onTexto={mudar}
                   onInserir={inserirNoCursor}
-                  onVirarEntidade={() => {
-                    setSugestaoDeCaminho(path.replace(/\.md$/i, '/README.md'));
-                    setPainel('caminho');
-                  }}
                 />
               ) : null}
-
               {painel === 'caminho' ? (
                 <MudarCaminho
-                  key={sugestaoDeCaminho ?? path}
+                  key={path}
                   path={path}
                   textoAtual={paraGravar}
                   acervo={arvore ?? null}
@@ -625,100 +729,133 @@ function Editor() {
                   carregando={lendoAcervo}
                   onCarregar={() => void lerAcervo()}
                   onGravar={(mudancas, msg, destino) => void gravarEmArvore(mudancas, msg, destino)}
-                  sugestao={sugestaoDeCaminho}
                 />
               ) : null}
+              {painel === 'diff' ? (
+                <div className="painel__corpo">
+                  <ul className="explicacao">
+                    {explicacao.frases.map((frase) => (
+                      <li key={frase}>{frase}</li>
+                    ))}
+                  </ul>
+                  <DiffView antes={original} depois={paraGravar} />
+                </div>
+              ) : null}
+            </aside>
+          ) : null}
+        </div>
+      ) : null}
+
+      {janela ? (
+        <div
+          className="searchdialog"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !enviando) setJanela(false);
+          }}
+        >
+          <div className="searchdialog__panel gravardialog" role="dialog" aria-modal="true" aria-label="Gravar no acervo">
+            <div className="gravardialog__topo">
+              <p className="gravardialog__titulo">Gravar no acervo</p>
+              <button type="button" className="editorbar__fechar" onClick={() => setJanela(false)} aria-label="Fechar" disabled={enviando}>
+                <X size={16} aria-hidden="true" />
+              </button>
             </div>
 
-            {gravacao === 'conflito' && remoto ? (
-              <div className="editor__conflito">
-                <p className="editor__conflito-aviso">
-                  O arquivo mudou no GitHub depois que esta página o abriu. Abaixo, o que está lá
-                  agora contra o que está na sua tela.
-                </p>
-                <DiffView
-                  antes={remoto.conteudo}
-                  depois={paraGravar}
-                  rotulo={{ antes: 'no GitHub agora', depois: 'na sua tela' }}
-                />
-                <div className="editor__acoes">
-                  <button type="button" className="editor__botao" onClick={recarregarDoConflito}>
-                    Recarregar do GitHub
-                  </button>
-                  <button
-                    type="button"
-                    className="editor__botao editor__botao--forte"
-                    onClick={() => void enviar(remoto.sha)}
-                  >
-                    Gravar por cima
-                  </button>
-                </div>
-                <p className="editor__dica">
-                  Recarregar larga o texto da tela, mas guarda uma cópia dele no rascunho deste
-                  navegador.
-                </p>
-              </div>
-            ) : null}
-
-            {achados.length ? (
-              <div className="editor__achados">
-                <p className="editor__achados-titulo">
-                  {achados.length === 1
-                    ? 'Uma referência aponta para o vazio:'
-                    : `${achados.length} referências apontam para o vazio:`}
-                </p>
-                <ul>
-                  {achados.map((achado) => (
-                    <li key={achado.alvo}>
-                      <code>{achado.escrita}</code> → <code>{achado.alvo}</code> não existe
-                    </li>
+            <div className="gravardialog__corpo">
+              <section>
+                <p className="gravardialog__rotulo">O que mudou</p>
+                <ul className="explicacao">
+                  {explicacao.frases.map((frase) => (
+                    <li key={frase}>{frase}</li>
                   ))}
+                  {temImagem ? (
+                    <li>
+                      {imagens.length === 1 ? 'Uma imagem nova' : `${imagens.length} imagens novas`}
+                      {viraPasta ? `; o documento vira ${caminhoDeEntidade(path)}` : ''}.
+                    </li>
+                  ) : null}
                 </ul>
-                <p className="editor__dica">
-                  É o mesmo critério que derruba a conferência do acervo. Se o documento citado
-                  ainda vai ser criado, o segundo toque grava assim mesmo.
+                <details className="gravardialog__linhas">
+                  <summary>Ver as linhas</summary>
+                  <DiffView antes={original} depois={paraGravar} />
+                </details>
+              </section>
+
+              {erro ? (
+                <p className="editor__estado editor__estado--erro" role="alert">
+                  {erro}
                 </p>
-              </div>
-            ) : null}
+              ) : null}
 
-            <label className="editor__mensagem">
-              <span className="editor__rotulo">O que entrou no acervo</span>
-              <span className="editor__campo">
-                {prefixo ? <span className="editor__prefixo">{prefixo}:</span> : null}
-                <input
-                  type="text"
-                  value={mensagem}
-                  onChange={(event) => setMensagem(event.target.value)}
-                  placeholder="registra o porte da espécie"
-                  readOnly={enviando}
-                />
-              </span>
-            </label>
+              {gravacao === 'conflito' && remoto ? (
+                <div className="editor__conflito">
+                  <p className="editor__conflito-aviso">
+                    O arquivo mudou no GitHub depois que esta página o abriu. Abaixo, o que está lá agora contra o
+                    que está na sua tela.
+                  </p>
+                  <DiffView antes={remoto.conteudo} depois={paraGravar} rotulo={{ antes: 'no GitHub agora', depois: 'na sua tela' }} />
+                  <div className="editor__acoes">
+                    <button type="button" className="editor__botao" onClick={recarregarDoConflito}>
+                      Recarregar do GitHub
+                    </button>
+                    <button type="button" className="editor__botao editor__botao--forte" onClick={() => void enviar(remoto.sha)}>
+                      Gravar por cima
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
-            <label className="editor__mensagem">
-              <span className="editor__rotulo">Nota para a revisão (opcional)</span>
-              <span className="editor__campo">
-                <input
-                  type="text"
-                  value={nota}
-                  onChange={(event) => setNota(event.target.value)}
-                  placeholder="falta citar isto em Luora; conferir o índice"
-                  readOnly={enviando}
-                />
-              </span>
-              <span className="editor__dica">
-                Toda gravação deixa uma entrada no diário do editor, com o que mudou e o que falta conferir em volta.
-              </span>
-            </label>
+              {achados.length ? (
+                <div className="editor__achados">
+                  <p className="editor__achados-titulo">
+                    {achados.length === 1
+                      ? 'Uma referência aponta para o vazio:'
+                      : `${achados.length} referências apontam para o vazio:`}
+                  </p>
+                  <ul>
+                    {achados.map((achado) => (
+                      <li key={achado.alvo}>
+                        <code>{achado.escrita}</code> → <code>{achado.alvo}</code> não existe
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
-            <div className="editor__acoes">
-              <button
-                type="button"
-                className="editor__botao"
-                onClick={() => setVerDiff((atual) => !atual)}
-                disabled={!sujo}
-              >
-                {verDiff ? 'Esconder o que muda' : 'Ver o que muda'}
+              <label className="editor__mensagem">
+                <span className="editor__rotulo">O que entrou no acervo</span>
+                <span className="editor__campo">
+                  {prefixo ? <span className="editor__prefixo">{prefixo}:</span> : null}
+                  <input
+                    type="text"
+                    value={mensagem}
+                    onChange={(event) => setMensagem(event.target.value)}
+                    placeholder={explicacao.assunto}
+                    readOnly={enviando}
+                  />
+                </span>
+                <span className="editor__dica">Sugerido a partir do que mudou; reescreva à vontade.</span>
+              </label>
+
+              <label className="editor__mensagem">
+                <span className="editor__rotulo">Nota para a revisão (opcional)</span>
+                <span className="editor__campo">
+                  <input
+                    type="text"
+                    value={nota}
+                    onChange={(event) => setNota(event.target.value)}
+                    placeholder="falta citar isto em Luora; conferir o índice"
+                    readOnly={enviando}
+                  />
+                </span>
+                <span className="editor__dica">Vai para o diário do editor, com o que mudou e o que falta conferir em volta.</span>
+              </label>
+            </div>
+
+            <div className="gravardialog__acoes">
+              <button type="button" className="editor__botao editor__botao--fraco" onClick={() => setJanela(false)} disabled={enviando}>
+                Voltar a editar
               </button>
               <button
                 type="button"
@@ -729,33 +866,10 @@ function Editor() {
                 {enviando ? 'Gravando…' : barrado ? 'Gravar mesmo assim' : 'Gravar no acervo'}
               </button>
             </div>
-
-            {verDiff && sujo ? <DiffView antes={original} depois={paraGravar} /> : null}
-
-            {gravado ? (
-              <p className="editor__gravado">
-                Gravado no acervo.{' '}
-                <a href={gravado.commitUrl} target="_blank" rel="noreferrer">
-                  Ver o commit
-                </a>
-                . O site reconstrói sozinho em cerca de um minuto.
-              </p>
-            ) : null}
-
-            {!sujo && !temImagem && !gravado ? (
-              <p className="editor__dica">Nada mudou ainda — o texto é igual ao do acervo.</p>
-            ) : null}
-
-            {arvore === null ? (
-              <p className="editor__dica">
-                Conferência de referências indisponível: não deu para listar o acervo. O CI continua
-                conferindo depois do commit.
-              </p>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-    </PageHead>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
