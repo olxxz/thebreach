@@ -281,9 +281,12 @@ export function DocArticle({
   backlinks = [],
   semIntro = false,
   eras = [],
+  chegam = [],
 }: {
   doc: BreachDoc;
   backlinks?: BreachDoc[];
+  /** Relações com nome que outros documentos têm com este. */
+  chegam?: Array<{ verbo: string; doc: BreachDoc }>;
   /** Eras da linha do tempo em que o documento se passa. */
   eras?: EraRef[];
   /** A página já mostra a abertura do documento como lede do cabeçalho. */
@@ -333,7 +336,7 @@ export function DocArticle({
           <Section key={section.id} section={section} />
         ))}
 
-        {(related.length > 0 || derived.length > 0 || backlinks.length > 0) && (
+        {(related.length > 0 || derived.length > 0 || backlinks.length > 0 || chegam.length > 0) && (
           <div className="panel" style={{ marginTop: 'var(--space-7)' }}>
             <p className="panel__title">
               Ligações
@@ -341,6 +344,26 @@ export function DocArticle({
                 <Share2 size={12} aria-hidden="true" /> ver no desenho
               </Link>
             </p>
+            {doc.header.relacoes.length > 0 || chegam.length > 0 ? (
+              <ul className="relacoes">
+                {doc.header.relacoes.map((relacao) => (
+                  <li key={`${relacao.verbo}-${relacao.path}`}>
+                    <span className="relacoes__verbo">{relacao.verbo}</span>
+                    <Link className="chip" href={relacao.href}>
+                      {relacao.label}
+                    </Link>
+                  </li>
+                ))}
+                {chegam.map(({ verbo, doc: outro }) => (
+                  <li key={`${outro.path}-${verbo}`}>
+                    <Link className="chip" href={`/c/${outro.categorySlug}/${outro.slug}`}>
+                      {outro.title}
+                    </Link>
+                    <span className="relacoes__verbo">{verbo} {doc.title}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             {related.length > 0 ? (
               <p className="card__text" style={{ marginBottom: 'var(--space-3)' }}>
                 <strong>Relacionados: </strong>

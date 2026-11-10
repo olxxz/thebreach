@@ -61,3 +61,15 @@ test('a entrada do diário diz o que mudou e não cria referência entre crases'
   // Fora do bloco de diff, nenhum caminho entre crases.
   assert.doesNotMatch(entrada.split('```diff')[0], /`\d{2}-/);
 });
+
+test('o campo Relações dá verbo e destino', async () => {
+  const { toRelacoes } = await import('../src/lib/breach/parse');
+  const lidas = toRelacoes(
+    'governa [Luora](../../../02-geografia/luora/); serve a [Orlumm](../orlumm/); [sem verbo](../x/); —',
+    '01-cosmologia/testemunhas-nefandas/orlumm',
+  );
+  assert.deepEqual(lidas.map((r) => [r.verbo, r.path, r.label]), [
+    ['governa', '02-geografia/luora/README.md', 'Luora'],
+    ['serve a', '01-cosmologia/testemunhas-nefandas/orlumm/README.md', 'Orlumm'],
+  ]);
+});

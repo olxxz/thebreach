@@ -387,6 +387,14 @@ export async function getVizinhosDeLeitura(path: string): Promise<{ antes: Carta
   return { antes: leitura[i - 1] ?? null, depois: leitura[i + 1] ?? null, posicao: i + 1, total: leitura.length };
 }
 
+/** As relações com nome que chegam a um documento, vindas dos outros. */
+export async function getRelacoesQueChegam(path: string): Promise<Array<{ verbo: string; doc: BreachDoc }>> {
+  const compendium = await getCompendium();
+  return compendium.docs.flatMap((doc) =>
+    doc.header.relacoes.filter((r) => r.path === path).map((r) => ({ verbo: r.verbo, doc })),
+  );
+}
+
 /** Documentos que citam um dado documento — retrolinks. */
 /** As eras em que um documento se passa, segundo a linha do tempo. */
 export async function getErasDe(path: string): Promise<EraRef[]> {

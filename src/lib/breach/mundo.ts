@@ -67,6 +67,8 @@ export interface Grafo {
   nos: NoDoGrafo[];
   /** Pares de índices em `nos`, sem direção e sem repetição. */
   arestas: Array<[number, number]>;
+  /** As ligações que têm nome: de quem, para quem, e o verbo. */
+  relacoes: Array<{ de: number; para: number; verbo: string }>;
 }
 
 /** Pastas cujas entidades são personagens: quem tem nome, rosto e vontade. */
@@ -212,7 +214,13 @@ export function montarReinos(
             ordemDePapel(a.header.subtipo ?? '') - ordemDePapel(b.header.subtipo ?? '') ||
             a.title.localeCompare(b.title, 'pt-BR'),
         )
-        .map((doc) => ({ ...cartaoDe(doc), capa: doc.hero ?? doc.capa }));
+        .map((doc) => {
+          // O papel sai da relação com nome: governa este reino, ou serve a alguém.
+          const aqui = doc.header.relacoes.find((r) => r.path === reino.path);
+          const serve = doc.header.relacoes.find((r) => /^serve/i.test(r.verbo));
+          const papel = aqui ? aqui.verbo : serve ? `${serve.verbo} ${serve.label}` : doc.header.subtipo;
+          return { ...cartaoDe(doc), capa: doc.hero ?? doc.capa, subtipo: papel };
+        });
 
       const grupos: GrupoDoReino[] = [
         { id: 'governo' as const, titulo: 'Quem governa', itens: governo },
@@ -273,6 +281,12 @@ export function montarGrafo(
       eras: (erasPorCaminho[doc.path] ?? []).map((era) => era.id),
     })),
     arestas,
+    relacoes: nosDocs.flatMap((doc, de) =>
+      doc.header.relacoes.flatMap((relacao) => {
+        const para = indice.get(relacao.path);
+        return para === undefined ? [] : [{ de, para, verbo: relacao.verbo }];
+      }),
+    ),
   };
 }
 

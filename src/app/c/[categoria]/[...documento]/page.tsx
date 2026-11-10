@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
   getBacklinks, getCategories, getCategory, getCompendium, getDoc, getErasDe, getGeradoEm,
-  getVizinhosDeLeitura,
+  getRelacoesQueChegam, getVizinhosDeLeitura,
 } from '@/lib/breach/api';
 import { CAMINHO_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 import { FaixaDeEras, LinhaDoTempo } from '@/components/LinhaDoTempo';
@@ -45,6 +45,7 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
     getErasDe(doc.path),
     getVizinhosDeLeitura(doc.path),
   ]);
+  const chegam = await getRelacoesQueChegam(doc.path);
   if (doc.path === CAMINHO_LINHA_DO_TEMPO) return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} />;
   const eyebrow = doc.header.subtipo
     ? `${category.title} › ${doc.header.subtipo}`
@@ -85,7 +86,7 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
         </div>
       </PageHead>
       <Recente path={doc.path} geradoEm={geradoEm} />
-      <DocArticle doc={doc} backlinks={backlinks} eras={eras} />
+      <DocArticle doc={doc} backlinks={backlinks} eras={eras} chegam={chegam} />
       {leitura ? <ContinuarLeitura {...leitura} /> : null}
     </div>
   );

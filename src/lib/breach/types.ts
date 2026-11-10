@@ -39,6 +39,11 @@ export interface DocRef {
   label: string;
 }
 
+/** Uma relação com nome (CONVENCOES.md §3): o verbo e o documento a que leva. */
+export interface Relacao extends DocRef {
+  verbo: string;
+}
+
 /** Cabeçalho padrão descrito em CONVENCOES.md §3. */
 export interface DocHeader {
   classificacao: string | null;
@@ -48,6 +53,8 @@ export interface DocHeader {
   fontesInternas: string[];
   documentosRelacionados: DocRef[];
   documentosDerivados: DocRef[];
+  /** O que liga este documento a outro: `governa Luora`, `serve a Orlumm`. */
+  relacoes: Relacao[];
   ultimaAtualizacao: string | null;
   registradaEm: string | null;
   /** Pares não reconhecidos, preservados para não perder informação. */

@@ -6,7 +6,7 @@
  * texto livre e seções numeradas em `##`/`###`.
  */
 
-import type { BreachDoc, DocHeader, DocKind, DocRef, DocSection } from './types';
+import type { BreachDoc, DocHeader, DocKind, DocRef, DocSection, Relacao } from './types';
 import { renderMarkdown, toPlainText, type Titulos } from './markdown';
 import { mergeTallies, tallyMarkers } from './markers';
 import {
@@ -61,6 +61,24 @@ function toDocRefs(value: string, pasta: string): DocRef[] {
   });
 }
 
+/**
+ * As relações de um cabeçalho: `governa [Luora](../luora/); guarda [X](…)`.
+ * O que vem antes do link é o verbo.
+ */
+export function toRelacoes(value: string, pasta: string): Relacao[] {
+  if (isEmptyValue(value)) return [];
+  const relacoes: Relacao[] = [];
+  for (const parte of value.split(';')) {
+    const m = /^\s*(.*?)\s*\[([^\]]*)\]\(([^)\s]+)\)\s*$/.exec(parte);
+    if (!m || !m[1]) continue;
+    const alvo = resolverRefRelativa(pasta, m[3]);
+    if (!alvo) continue;
+    const path = normalizeDocPath(alvo);
+    relacoes.push({ verbo: m[1], path, href: hrefForPath(path) ?? '', label: m[2] || labelFromPath(path) });
+  }
+  return relacoes;
+}
+
 function splitList(value: string): string[] {
   if (isEmptyValue(value)) return [];
   return value
@@ -86,6 +104,7 @@ function parsePreamble(lines: string[], pasta: string): Preamble {
     fontesInternas: [],
     documentosRelacionados: [],
     documentosDerivados: [],
+    relacoes: [],
     ultimaAtualizacao: null,
     registradaEm: null,
     extras: [],
@@ -118,6 +137,9 @@ function parsePreamble(lines: string[], pasta: string): Preamble {
         break;
       case 'documentos derivados':
         header.documentosDerivados = toDocRefs(value, pasta);
+        break;
+      case 'relacoes':
+        header.relacoes = toRelacoes(value, pasta);
         break;
       case 'ultima atualizacao':
         header.ultimaAtualizacao = isEmptyValue(value) ? null : value;

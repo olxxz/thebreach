@@ -234,6 +234,19 @@ export function Grafo({ grafo, categorias, eras }: Props) {
           .map((i) => ({ i, no: grafo.nos[i] }))
           .sort((a, b) => a.no.title.localeCompare(b.no.title, 'pt-BR'));
 
+  /** O verbo que liga o escolhido a um vizinho, na direção em que foi escrito. */
+  const verboCom = (vizinho: number): string | null => {
+    if (selecionado === null) return null;
+    const vai = grafo.relacoes.find((r) => r.de === selecionado && r.para === vizinho);
+    if (vai) return `${vai.verbo} →`;
+    const vem = grafo.relacoes.find((r) => r.de === vizinho && r.para === selecionado);
+    return vem ? `← ${vem.verbo}` : null;
+  };
+  const comNome = useMemo(
+    () => new Set(grafo.relacoes.map((r) => (r.de < r.para ? `${r.de}-${r.para}` : `${r.para}-${r.de}`))),
+    [grafo],
+  );
+
   const maisLigados = useMemo(
     () =>
       grafo.nos
@@ -312,6 +325,7 @@ export function Grafo({ grafo, categorias, eras }: Props) {
                     key={`${a}-${b}`}
                     className="grafo__aresta"
                     data-forte={forte}
+                    data-nome={comNome.has(`${a}-${b}`)}
                     data-apagada={ativo !== null && !forte}
                     x1={posicoes[a].x}
                     y1={posicoes[a].y}
@@ -381,11 +395,14 @@ export function Grafo({ grafo, categorias, eras }: Props) {
                 {ligados.length} ligaç{ligados.length === 1 ? 'ão' : 'ões'}
               </p>
               <ul className="grafo__lista">
-                {ligados.map(({ i, no }) => (
+                {[...ligados]
+                  .sort((a, b) => Number(Boolean(verboCom(b.i))) - Number(Boolean(verboCom(a.i))))
+                  .map(({ i, no }) => (
                   <li key={no.path}>
                     <button type="button" onClick={() => setSelecionado(i)}>
                       <span className="grafo__ponto" style={{ background: accentFor(no.categorySlug) }} />
                       {no.title}
+                      {verboCom(i) ? <span className="grafo__verbo">{verboCom(i)}</span> : null}
                     </button>
                   </li>
                 ))}
