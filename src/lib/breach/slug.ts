@@ -57,6 +57,10 @@ export function hrefForPath(filePath: string): string | null {
 
   const category = parseCategoryDir(segments[0]);
   if (!category) return null;
+  // O `00-meta` não é categoria: só os três arquivos de META_ROUTES viram
+  // página. O resto — diário do editor, cofre, arquétipos — é bastidor, e uma
+  // rota inventada para eles daria em página que não existe.
+  if (category.number === '00') return null;
 
   const file = segments[segments.length - 1];
   if (!file.endsWith('.md')) return null;

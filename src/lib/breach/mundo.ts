@@ -174,7 +174,13 @@ export function montarReinos(
   docs: BreachDoc[],
   ligacoes: Record<string, string[]>,
   erasPorCaminho: Record<string, EraRef[]>,
+  /** Ids das eras na ordem da linha do tempo: é a ordem em que os reinos saem. */
+  ordemDasEras: string[] = [],
 ): Reino[] {
+  const ordemDaEra = (id: string): number => {
+    const i = ordemDasEras.indexOf(id);
+    return i === -1 ? 999 : i;
+  };
   const vizinhos = vizinhanca(ligacoes);
   const porCaminho = new Map(docs.map((doc) => [doc.path, doc]));
 
@@ -230,16 +236,6 @@ export function montarReinos(
       const era = (reino: Reino): string => reino.eras[0]?.id ?? 'zz';
       return ordemDaEra(era(a)) - ordemDaEra(era(b)) || porTitulo(a, b);
     });
-}
-
-/** A ordem das eras é dada de fora, pela linha do tempo. */
-let ORDEM_DAS_ERAS: string[] = [];
-export function definirOrdemDasEras(ids: string[]): void {
-  ORDEM_DAS_ERAS = ids;
-}
-function ordemDaEra(id: string): number {
-  const i = ORDEM_DAS_ERAS.indexOf(id);
-  return i === -1 ? 999 : i;
 }
 
 export function montarGrafo(

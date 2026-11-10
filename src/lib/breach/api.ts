@@ -34,7 +34,7 @@ import { CAMINHO_LINHA_DO_TEMPO, erasPorDocumento, lerLinhaDoTempo } from './lin
 import type { EraRef } from './linhaDoTempo';
 import type { Cartao } from './mundo';
 import {
-  cartaoDe, definirOrdemDasEras, montarGaleria, montarGrafo, montarPersonagens, montarReinos,
+  cartaoDe, montarGaleria, montarGrafo, montarPersonagens, montarReinos,
   referenciasDe,
 } from './mundo';
 import { lerNomes, lerRaizes } from '@/lib/thalae/raizes';
@@ -260,7 +260,6 @@ async function build(): Promise<Compendium> {
   const eras = await lerLinhaDoTempo(raws.get(CAMINHO_LINHA_DO_TEMPO) ?? '', titulos);
 
   const erasPorCaminho = Object.fromEntries(erasPorDocumento(eras));
-  definirOrdemDasEras(eras.map((era) => era.id));
 
   const existentes = new Set(docs.map((doc) => doc.path));
   const ligacoes: Record<string, string[]> = {};
@@ -293,7 +292,7 @@ async function build(): Promise<Compendium> {
     eras,
     erasPorCaminho,
     ligacoes,
-    reinos: montarReinos(docs, ligacoes, erasPorCaminho),
+    reinos: montarReinos(docs, ligacoes, erasPorCaminho, eras.map((era) => era.id)),
     personagens: montarPersonagens(docs, ligacoes, erasPorCaminho),
     grafo: montarGrafo(docs, ligacoes, erasPorCaminho),
     galeria: montarGaleria(todos, docs, raws),

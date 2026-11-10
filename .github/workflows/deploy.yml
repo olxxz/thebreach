@@ -57,6 +57,9 @@ jobs:
       - name: Verificar tipos
         run: npm run typecheck
 
+      - name: Rodar os testes
+        run: npm test
+
       - name: Construir o site a partir do acervo
         env:
           BREACH_TOKEN: ${{ secrets.BREACH_TOKEN }}

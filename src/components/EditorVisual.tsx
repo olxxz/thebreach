@@ -675,7 +675,7 @@ export const EditorVisual = forwardRef<EditorVisualRef, Props>(function EditorVi
     const endereco = window.prompt('Endereço do link (caminho relativo ou https://…)');
     if (!endereco || !devolverSelecao()) return;
     const escolhido = window.getSelection()?.toString() || endereco;
-    porHtml(`<a href="#" data-href="${endereco.replace(/"/g, '%22')}">${escaparTexto(escolhido)}</a>`);
+    porHtml(`<a href="#" data-href="${escaparTexto(endereco.trim()).replace(/"/g, '&quot;')}">${escaparTexto(escolhido)}</a>`);
   };
 
   const escolherMarcador = (marcador: string | null): void => {
