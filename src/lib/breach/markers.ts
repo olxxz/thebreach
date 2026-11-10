@@ -34,6 +34,11 @@ export const MARKERS: Record<MarkerId, MarkerMeta> = {
     label: 'PROPOSTA',
     meaning: 'Sugestão pendente de aprovação. Nunca é canônico.',
   },
+  EMABERTO: {
+    id: 'EMABERTO',
+    label: 'EM ABERTO',
+    meaning: 'Deixado aberto de propósito pelo Criador, para quem lê ou joga moldar.',
+  },
 };
 
 export const MARKER_ORDER: MarkerId[] = [
@@ -41,6 +46,7 @@ export const MARKER_ORDER: MarkerId[] = [
   'ATESTADO',
   'CRENCA',
   'DISPUTADO',
+  'EMABERTO',
   'LACUNA',
   'PROPOSTA',
 ];

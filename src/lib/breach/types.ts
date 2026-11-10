@@ -17,7 +17,8 @@ export type MarkerId =
   | 'CRENCA'
   | 'DISPUTADO'
   | 'LACUNA'
-  | 'PROPOSTA';
+  | 'PROPOSTA'
+  | 'EMABERTO';
 
 export interface MarkerMeta {
   id: MarkerId;
@@ -215,7 +216,7 @@ export interface Compendium {
   raizes: RaizDoAcervo[];
   /** Os nomes em Thalae registrados, com as raízes de cada um. */
   nomesThalae: NomeDoAcervo[];
-  /** O cofre do modo administrador (`00-meta/cofre.json`), quando existe. */
+  /** O cofre do Ateliê (`00-meta/cofre.json`), quando existe. */
   cofre: string | null;
   /** Contradições em aberto declaradas no índice canônico. */
   contradictions: Array<{ n: string; descricao: string; documentos: string; status: string }>;

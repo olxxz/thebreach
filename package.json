@@ -10,7 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test testes/*.test.ts",
-    "imagens": "node --env-file-if-exists=.env.local scripts/baixar-imagens.mjs"
+    "imagens": "node --env-file-if-exists=.env.local --import tsx scripts/baixar-imagens.mjs"
   },
   "dependencies": {
     "diff": "^9.0.0",

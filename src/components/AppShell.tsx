@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BookOpen, Castle, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
-  PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2, Shield, ShieldCheck,
+  BookOpen, Castle, Clock, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
+  Feather, PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2,
   Stamp, Sun, Users, X,
 } from 'lucide-react';
 import type { SearchRecord } from '@/lib/breach/types';
@@ -21,6 +21,9 @@ import { useArrastoGavetas } from '@/hooks/useArrastoGavetas';
 import { useAtalhos } from '@/hooks/useAtalhos';
 import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
 import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
+import { useGravados } from '@/hooks/useGravados';
+import { tituloDoGravado } from '@/lib/breach/recentes';
+import { hrefForPath } from '@/lib/breach/slug';
 
 export type { NavCategory, NavDoc };
 
@@ -28,8 +31,12 @@ interface Props {
   nav: NavCategory[];
   searchRecords: SearchRecord[];
   eras: Array<{ id: string; titulo: string }>;
-  /** O cofre do modo administrador publicado no acervo, quando há um. */
+  /** O cofre do Ateliê publicado no acervo, quando há um. */
   cofre: string | null;
+  /** Instante em que o site foi construído: o que foi gravado depois é provisório. */
+  geradoEm: string;
+  /** Os documentos que o público vê. */
+  publicos: string[];
   repoUrl: string;
   children: React.ReactNode;
 }
@@ -53,12 +60,44 @@ const META = [
 
 const MAIN_LINKS = [...EXPLORAR, ...META];
 
-export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }: Props) {
+export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, repoUrl, children }: Props) {
   const pathname = usePathname();
   const {
     theme, toggleTheme, nav: navMode, setNav, drawer, setDrawer, tools, toggleTools, admin,
-    soCanone, toggleCanone,
   } = useAppearance();
+
+  // O que este navegador gravou e o site ainda não publicou: aparece na
+  // navegação e na busca até a publicação alcançar.
+  const gravados = useGravados(geradoEm, admin);
+  const provisorios = useMemo(() => {
+    const conhecidos = new Set(publicos);
+    return gravados.map(({ path, gravado }) => {
+      const rota = conhecidos.has(path) ? hrefForPath(path) : null;
+      return {
+        path,
+        titulo: tituloDoGravado(gravado.conteudo, path),
+        novo: Boolean(gravado.novo) || !conhecidos.has(path),
+        href: rota ?? `/atelie?d=${encodeURIComponent(path)}`,
+        conteudo: gravado.conteudo,
+      };
+    });
+  }, [gravados, publicos]);
+  const registrosDaBusca = useMemo(() => {
+    if (provisorios.length === 0) return searchRecords;
+    const trocados = new Set(provisorios.map((item) => item.href));
+    const novos: SearchRecord[] = provisorios.map((item) => ({
+      title: `${item.titulo} · provisório`,
+      href: item.href,
+      categoria: 'Provisório',
+      subtipo: null,
+      excerpt: toPlainTextLeve(item.conteudo).slice(0, 220),
+      headings: [...item.conteudo.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => m[1]).join(' '),
+      body: toPlainTextLeve(item.conteudo),
+      capa: null,
+      eras: [],
+    }));
+    return [...novos, ...searchRecords.filter((record) => !trocados.has(record.href))];
+  }, [provisorios, searchRecords]);
   const [search, setSearch] = useState(false);
   const [tokenDialog, setTokenDialog] = useState(false);
   const wide = useMedia('(min-width: 72rem)');
@@ -153,12 +192,11 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
           </Link>
 
           <div className="tools">
-            {soCanone ? (
-              <button type="button" className="tool tool--canone" onClick={toggleCanone} title="Mostrar tudo de novo">
-                <Stamp size={15} aria-hidden="true" />
-                <span>Só o cânone</span>
-                <X size={13} aria-hidden="true" />
-              </button>
+            {admin ? (
+              <Link className="tool tool--atelie" href="/atelie" title="Ir ao Ateliê: propostas e lacunas">
+                <Feather size={15} aria-hidden="true" />
+                <span>Ateliê</span>
+              </Link>
             ) : null}
             <button
               type="button"
@@ -174,7 +212,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
               type="button"
               className="tool tool--tools"
               onClick={() => (tools === 'open' ? toggleTools() : abrirFerramentas())}
-              aria-label={tools === 'open' ? 'Fechar as ferramentas' : 'Abrir as ferramentas'}
+              aria-label={tools === 'open' ? 'Fechar as configurações' : 'Abrir as configurações'}
               aria-expanded={tools === 'open'}
             >
               <PanelRight size={19} aria-hidden="true" />
@@ -189,16 +227,16 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
 
           Como a da esquerda, abre e fecha: recolhida é uma faixa de ícones,
           aberta mostra os rótulos. */}
-      <aside className="utilrail" ref={ferrRef} aria-label="Ferramentas do site">
+      <aside className="utilrail" ref={ferrRef} aria-label="Configurações do site">
         <div className="utilrail__bar">
-          <p className="utilrail__label">Ferramentas</p>
+          <p className="utilrail__label">Configurações</p>
           <button
             type="button"
             className="utilrail__chave"
             onClick={toggleTools}
             aria-expanded={tools === 'open'}
-            aria-label={tools === 'open' ? 'Recolher as ferramentas' : 'Abrir as ferramentas'}
-            title={tools === 'open' ? 'Recolher as ferramentas' : 'Abrir as ferramentas'}
+            aria-label={tools === 'open' ? 'Recolher as configurações' : 'Abrir as configurações'}
+            title={tools === 'open' ? 'Recolher as configurações' : 'Abrir as configurações'}
           >
             <PanelRight size={17} aria-hidden="true" />
           </button>
@@ -217,25 +255,20 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         <button
           type="button"
           className="utilrail__tool"
-          data-ativo={soCanone}
-          aria-pressed={soCanone}
-          onClick={toggleCanone}
-          title={soCanone ? 'Mostrar propostas e lacunas' : 'Ler só o que é cânone'}
-        >
-          <Stamp size={18} aria-hidden="true" />
-          <span className="utilrail__nome">{soCanone ? 'Só o cânone: ligado' : 'Só o cânone'}</span>
-        </button>
-        <button
-          type="button"
-          className="utilrail__tool"
           data-ativo={admin}
           onClick={() => setTokenDialog(true)}
-          aria-label="Modo administrador"
-          title="Modo administrador (Ctrl+Alt+A)"
+          aria-label={admin ? 'No Ateliê — sair ou trocar a senha' : 'Entrar no Ateliê'}
+          title="Ateliê (Ctrl+Alt+A)"
         >
-          {admin ? <ShieldCheck size={18} aria-hidden="true" /> : <Shield size={18} aria-hidden="true" />}
-          <span className="utilrail__nome">{admin ? 'Administrador' : 'Modo administrador'}</span>
+          <Feather size={18} aria-hidden="true" />
+          <span className="utilrail__nome">{admin ? 'No Ateliê' : 'Entrar no Ateliê'}</span>
         </button>
+        {admin ? (
+          <Link className="utilrail__tool" href="/atelie" title="Propostas, lacunas e documentos que o público não vê">
+            <Stamp size={18} aria-hidden="true" />
+            <span className="utilrail__nome">Abrir o Ateliê</span>
+          </Link>
+        ) : null}
         <a
           className="utilrail__tool"
           href={repoUrl}
@@ -253,7 +286,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         <aside className="railnav" ref={navRef} data-open={drawer} aria-label="Categorias do acervo">
           <div className="railnav__bar">
             <button type="button" className="railnav__ferramentas" onClick={abrirFerramentas}>
-              <PanelRight size={15} aria-hidden="true" /> Tema e ferramentas
+              <PanelRight size={15} aria-hidden="true" /> Tema e configurações
             </button>
             <span className="railnav__label">Navegação</span>
             <button
@@ -297,6 +330,23 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
               ))}
             </ul>
           </div>
+
+          {provisorios.length > 0 ? (
+            <div className="railnav__group railnav__group--provisorio">
+              <p className="railnav__title">Provisórios</p>
+              <ul className="railnav__list">
+                {provisorios.map((item) => (
+                  <li key={item.path}>
+                    <Link className="railnav__item" href={item.href} title={`${item.path} — gravado, o site ainda não publicou`}>
+                      <Clock size={16} aria-hidden="true" />
+                      <span>{item.titulo}</span>
+                      <span className="railnav__count">{item.novo ? 'novo' : 'editado'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="railnav__group">
             <p className="railnav__title">Categorias</p>
@@ -373,7 +423,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
             ref={veuRef}
             className="scrim"
             data-visivel={drawer || tools === 'open'}
-            aria-label={drawer ? 'Fechar a navegação' : 'Fechar as ferramentas'}
+            aria-label={drawer ? 'Fechar a navegação' : 'Fechar as configurações'}
             onClick={() => {
               setDrawer(false);
               if (tools === 'open') toggleTools();
@@ -453,8 +503,19 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         </button>
       </nav>
 
-      <SearchDialog records={searchRecords} eras={eras} open={search} onClose={() => setSearch(false)} />
+      <SearchDialog records={registrosDaBusca} eras={eras} open={search} onClose={() => setSearch(false)} />
       <TokenDialog open={tokenDialog} onClose={() => setTokenDialog(false)} cofre={cofre} />
     </div>
   );
+}
+
+/** Texto corrido de um markdown, sem o pipeline inteiro: basta para a busca. */
+function toPlainTextLeve(markdown: string): string {
+  return markdown
+    .replace(/^\*\*[^*]+:\*\*.*$/gm, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[`*_>#|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

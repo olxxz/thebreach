@@ -1,5 +1,5 @@
 /**
- * Acesso à API do GitHub a partir do navegador, para o modo administrador.
+ * Acesso à API do GitHub a partir do navegador, para o Ateliê.
  * Único lugar do lado do cliente que fala com `api.github.com`.
  */
 
@@ -144,6 +144,20 @@ export async function lerBlob(sha: string, token: string): Promise<string> {
   }
   const payload = (await response.json()) as { content: string; encoding: string };
   return payload.encoding === 'base64' ? decodeBase64Utf8(payload.content) : payload.content;
+}
+
+/**
+ * Uma imagem ou um áudio do acervo, como URL local do navegador. É como o
+ * Ateliê mostra a mídia que o build público não copiou para o site.
+ */
+export async function lerMidia(path: string, token: string): Promise<string> {
+  const response = await fetch(`${contentsUrl(path)}?ref=${BRANCH}`, {
+    headers: { Accept: 'application/vnd.github.raw', Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new GithubApiError(response.status, `Falha ao ler ${path} (${response.status}).`);
+  }
+  return URL.createObjectURL(await response.blob());
 }
 
 /** Lê um arquivo do acervo. `null` quando o arquivo não existe. */

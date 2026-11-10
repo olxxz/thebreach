@@ -4,7 +4,7 @@ import { AppearanceProvider } from '@/components/AppearanceProvider';
 import { AppShell, type NavCategory, type NavDoc } from '@/components/AppShell';
 import { Pronuncia } from '@/components/Pronuncia';
 import type { DocNode } from '@/lib/breach/types';
-import { getCompendium, getSearchIndex } from '@/lib/breach/api';
+import { getCompendium, getSearchIndex, getGeradoEm } from '@/lib/breach/api';
 import { DEFAULT_NAV, DEFAULT_TOOLS, STORAGE_KEYS } from '@/lib/layouts';
 import { BASE_PATH } from '@/lib/breach/slug';
 import '@/styles/main.sass';
@@ -69,8 +69,6 @@ var f=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.tools)});
 if(f==='open'||f==='closed'){d.setAttribute('data-tools',f);}
 var a=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.admin)});
 if(a==='1'){d.setAttribute('data-admin','1');}
-var l=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.leitura)});
-if(l==='canone'){d.setAttribute('data-leitura','canone');}
 }catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -113,6 +111,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             eras={compendium.eras.map(({ id, titulo }) => ({ id, titulo }))}
             repoUrl={compendium.source.url}
             cofre={compendium.cofre}
+            geradoEm={await getGeradoEm()}
+            publicos={compendium.docs.map((doc) => doc.path)}
           >
             {children}
           </AppShell>

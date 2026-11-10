@@ -12,24 +12,52 @@
  */
 
 const PREFIXO = 'breach:gravado';
+/** A lista dos caminhos gravados, para a navegação e a busca saberem de todos. */
+const INDICE = 'breach:gravados';
+/** Avisado a cada mudança, para a navegação se redesenhar sem recarregar. */
+export const EVENTO_GRAVADOS = 'breach:gravados-mudou';
 
 export interface Gravado {
   conteudo: string;
   /** Quando foi gravado, em milissegundos. */
   em: number;
   commitUrl: string;
+  /** Documento criado agora: ainda não tem página no site. */
+  novo?: boolean;
 }
 
 function chave(path: string): string {
   return `${PREFIXO}:${path}`;
 }
 
+function lerIndice(): string[] {
+  try {
+    const valor = JSON.parse(window.localStorage.getItem(INDICE) ?? '[]') as unknown;
+    return Array.isArray(valor) ? valor.filter((p): p is string => typeof p === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function gravarIndice(caminhos: string[]): void {
+  try {
+    window.localStorage.setItem(INDICE, JSON.stringify([...new Set(caminhos)]));
+  } catch {
+    /* sem armazenamento: a página do documento ainda funciona */
+  }
+  window.dispatchEvent(new Event(EVENTO_GRAVADOS));
+}
+
 export function registrarGravado(path: string, gravado: Gravado): void {
   try {
-    window.localStorage.setItem(chave(path), JSON.stringify(gravado));
+    // Gravar de novo um documento criado agora não o torna velho.
+    const anterior = window.localStorage.getItem(chave(path));
+    const eraNovo = anterior ? Boolean((JSON.parse(anterior) as Partial<Gravado>).novo) : false;
+    window.localStorage.setItem(chave(path), JSON.stringify({ ...gravado, novo: gravado.novo || eraNovo }));
   } catch {
     /* navegação privada ou cota cheia: sem aviso, o site continua certo */
   }
+  gravarIndice([...lerIndice(), path]);
 }
 
 export function esquecerGravado(path: string): void {
@@ -38,6 +66,22 @@ export function esquecerGravado(path: string): void {
   } catch {
     /* nada guardado, nada a apagar */
   }
+  gravarIndice(lerIndice().filter((p) => p !== path));
+}
+
+/** Tudo o que foi gravado aqui e o site ainda não publicou. */
+export function listarGravados(geradoEm: string): Array<{ path: string; gravado: Gravado }> {
+  const lista: Array<{ path: string; gravado: Gravado }> = [];
+  for (const path of lerIndice()) {
+    const gravado = lerGravado(path, geradoEm);
+    if (gravado) lista.push({ path, gravado });
+  }
+  return lista.sort((a, b) => b.gravado.em - a.gravado.em);
+}
+
+/** O título de um markdown: a primeira linha `# `. */
+export function tituloDoGravado(conteudo: string, path: string): string {
+  return /^#\s+(.+)$/m.exec(conteudo)?.[1].trim() ?? path.split('/').filter((p) => p && p !== 'README.md').pop() ?? path;
 }
 
 /**
@@ -63,6 +107,7 @@ export function lerGravado(path: string, geradoEm: string): Gravado | null {
       conteudo: valor.conteudo,
       em: valor.em,
       commitUrl: typeof valor.commitUrl === 'string' ? valor.commitUrl : '',
+      novo: Boolean(valor.novo),
     };
   } catch {
     return null;

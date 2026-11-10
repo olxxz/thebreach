@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import { getCompendium } from '@/lib/breach/api';
+import { getCompendium, getGeradoEm } from '@/lib/breach/api';
+import { EditarLink } from '@/components/EditarLink';
+import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 import { Chip, PageHead } from '@/components/content';
 
 export const metadata: Metadata = {
@@ -9,6 +11,8 @@ export const metadata: Metadata = {
 
 export default async function ChangelogPage() {
   const compendium = await getCompendium();
+  const geradoEm = await getGeradoEm();
+  const publicos = compendium.docs.map((d) => d.path);
 
   return (
     <div className="stack">
@@ -21,7 +25,13 @@ export default async function ChangelogPage() {
           <Chip label="Passagens" value={String(compendium.changelog.length)} />
           {compendium.changelog[0] ? <Chip label="Mais recente" value={compendium.changelog[0].date} /> : null}
         </div>
+        <div className="pagehead__acoes">
+          <EditarLink path="00-meta/REGISTRO-DE-ALTERACOES.md" />
+        </div>
       </PageHead>
+      <AlternarAtelie path="00-meta/REGISTRO-DE-ALTERACOES.md" publicos={publicos} geradoEm={geradoEm}>
+        {null}
+      </AlternarAtelie>
 
       {compendium.changelog.length === 0 ? (
         <p className="empty">Nenhuma passagem registrada.</p>

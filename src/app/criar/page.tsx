@@ -11,6 +11,7 @@ import {
   listarArvore,
   type Mudanca,
 } from '@/lib/breach/github';
+import { registrarGravado } from '@/lib/breach/recentes';
 import { comDiario } from '@/lib/breach/diario';
 import { withBase } from '@/lib/breach/slug';
 
@@ -49,9 +50,9 @@ function Criar() {
 
   if (!admin || !token) {
     return (
-      <PageHead eyebrow="Modo administrador" title="Documento novo">
+      <PageHead eyebrow="Ateliê" title="Documento novo">
         <p className="editor__estado">
-          Modo administrador desligado. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
+          Fora do Ateliê. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
           token e ativar.
         </p>
       </PageHead>
@@ -63,7 +64,14 @@ function Criar() {
     setErro('');
     try {
       const comRegistro = await comDiario(mudancas, mensagem, token, { acao: 'criação', principal: destino });
-      await commitarArvore(comRegistro, mensagem, token);
+      const commit = await commitarArvore(comRegistro, mensagem, token);
+      // O documento novo só ganha página quando o site publicar: até lá ele
+      // vive neste navegador, provisório, na navegação, na busca e no Ateliê.
+      const em = Date.now();
+      for (const mudanca of mudancas) {
+        if (mudanca.tipo !== 'texto' || !mudanca.path.endsWith('.md')) continue;
+        registrarGravado(mudanca.path, { conteudo: mudanca.conteudo, em, commitUrl: commit.commitUrl, novo: true });
+      }
       // Documento aberto é documento para escrever: vai direto para a edição.
       window.location.href = `${withBase('/editar/')}?doc=${encodeURIComponent(destino)}`;
     } catch (error: unknown) {
@@ -73,7 +81,7 @@ function Criar() {
   };
 
   return (
-    <PageHead eyebrow="Modo administrador" title="Documento novo">
+    <PageHead eyebrow="Ateliê" title="Documento novo">
       <div className="editor">
         {pasta ? (
           <p className="editor__dica">
@@ -106,7 +114,7 @@ function Criar() {
 
 export default function CriarPage() {
   return (
-    <Suspense fallback={<PageHead eyebrow="Modo administrador" title="Documento novo" />}>
+    <Suspense fallback={<PageHead eyebrow="Ateliê" title="Documento novo" />}>
       <Criar />
     </Suspense>
   );
