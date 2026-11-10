@@ -467,3 +467,29 @@
   .tela .grafo__zoom
     left: auto
     right: var(--space-3)
+
+// Desfoque por cima de um desenho que se mexe é repintado a cada quadro: na
+// tela das relações o cabeçalho fica opaco, e o desenho não anima opacidade.
+.app[data-modo='tela'] .masthead
+  backdrop-filter: none
+  background: var(--bg-app)
+
+.tela .grafo__aresta,
+.tela .grafo__no
+  transition: none
+
+.tela .grafo__quadro > svg
+  touch-action: none
+  text-rendering: optimizeSpeed
+
+// Home sem abertura: só a linha do Ateliê, que fora dele fica vazia.
+.inicio__atelie
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+
+  &:empty
+    display: none
+
+  .atelie__faixa
+    margin: 0

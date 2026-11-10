@@ -112,6 +112,24 @@ export function Grafo({ grafo, categorias, eras }: Props) {
   const [era, setEra] = useState<string | null>(null);
   const [vista, setVista] = useState<Vista>(VISTA_INICIAL);
   const svgRef = useRef<SVGSVGElement>(null);
+  /**
+   * Arrastar e aproximar mexem só no `transform` do grupo, direto no DOM, sem
+   * passar pelo React: redesenhar centenas de pontos e linhas a cada movimento
+   * do dedo é o que travava. A vista "oficial" (que acerta a espessura das
+   * linhas e o tamanho dos rótulos) é gravada um instante depois que o gesto para.
+   */
+  const grupoRef = useRef<SVGGElement>(null);
+  const vistaRef = useRef<Vista>(VISTA_INICIAL);
+  const assentar = useRef<number | null>(null);
+  useEffect(() => {
+    vistaRef.current = vista;
+  }, [vista]);
+  const mover = (v: Vista): void => {
+    vistaRef.current = v;
+    grupoRef.current?.setAttribute('transform', `translate(${v.x} ${v.y}) scale(${v.k})`);
+    if (assentar.current) window.clearTimeout(assentar.current);
+    assentar.current = window.setTimeout(() => setVista(vistaRef.current), 140);
+  };
   const dedos = useRef(new Map<number, Ponto>());
   const arrastou = useRef(false);
 
@@ -159,13 +177,12 @@ export function Grafo({ grafo, categorias, eras }: Props) {
 
   /** Aproxima em torno de um ponto do desenho, para o zoom não fugir do dedo. */
   const aproximar = (fator: number, centro?: Ponto): void => {
-    setVista((v) => {
-      const k = Math.min(4, Math.max(0.6, v.k * fator));
-      const c = centro ?? { x: LARGURA / 2, y: ALTURA / 2 };
-      // O ponto `c` (em coordenadas do quadro) fica parado na tela.
-      const mundo = { x: (c.x - v.x) / v.k, y: (c.y - v.y) / v.k };
-      return { k, x: c.x - mundo.x * k, y: c.y - mundo.y * k };
-    });
+    const v = vistaRef.current;
+    const k = Math.min(4, Math.max(0.6, v.k * fator));
+    const c = centro ?? { x: LARGURA / 2, y: ALTURA / 2 };
+    // O ponto `c` (em coordenadas do quadro) fica parado na tela.
+    const mundo = { x: (c.x - v.x) / v.k, y: (c.y - v.y) / v.k };
+    mover({ k, x: c.x - mundo.x * k, y: c.y - mundo.y * k });
   };
 
   const noQuadro = (clientX: number, clientY: number): Ponto => {
@@ -216,7 +233,8 @@ export function Grafo({ grafo, categorias, eras }: Props) {
       if (Math.abs(dx) + Math.abs(dy) > 1.5) arrastou.current = true;
       if (arrastou.current) {
         (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
-        setVista((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+        const v = vistaRef.current;
+        mover({ ...v, x: v.x + dx, y: v.y + dy });
       }
     }
     dedos.current.set(event.pointerId, agora);
@@ -324,7 +342,7 @@ export function Grafo({ grafo, categorias, eras }: Props) {
               if (!arrastou.current) setSelecionado(null);
             }}
           >
-            <g transform={`translate(${vista.x} ${vista.y}) scale(${vista.k})`}>
+            <g ref={grupoRef} transform={`translate(${vista.x} ${vista.y}) scale(${vista.k})`}>
               {grafo.arestas.map(([a, b]) => {
                 if (!visivel(a) || !visivel(b)) return null;
                 const forte = ativo !== null && (a === ativo || b === ativo);
@@ -356,8 +374,12 @@ export function Grafo({ grafo, categorias, eras }: Props) {
                     data-apagado={!destaque}
                     data-atual={i === selecionado}
                     transform={`translate(${posicoes[i].x} ${posicoes[i].y})`}
-                    onPointerEnter={() => setSobre(i)}
-                    onPointerLeave={() => setSobre(null)}
+                    onPointerEnter={() => {
+                      if (dedos.current.size === 0) setSobre(i);
+                    }}
+                    onPointerLeave={() => {
+                      if (dedos.current.size === 0) setSobre(null);
+                    }}
                     onClick={(event) => {
                       event.stopPropagation();
                       if (!arrastou.current) setSelecionado(i === selecionado ? null : i);
@@ -381,7 +403,7 @@ export function Grafo({ grafo, categorias, eras }: Props) {
             <button type="button" onClick={() => aproximar(1 / 1.3)} aria-label="Afastar">
               <Minus size={16} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => setVista(VISTA_INICIAL)} aria-label="Ver tudo">
+            <button type="button" onClick={() => mover(VISTA_INICIAL)} aria-label="Ver tudo">
               <Maximize2 size={15} aria-hidden="true" />
             </button>
           </div>

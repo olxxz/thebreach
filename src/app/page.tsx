@@ -27,16 +27,25 @@ export default async function HomePage() {
         <Hero src={readme.hero} alt={readme.heroAlt ?? 'Vista das montanhas do mundo conhecido, com um dragão em voo'} />
       ) : null}
 
-      <PageHead eyebrow="Acervo de um universo em construção" title={readme?.title ?? 'Compêndio Breach'}>
-        <div className="pagehead__acoes">
-          <EditarLink path="README.md" />
-        </div>
-        <AlternarAtelie path="README.md" publicos={publicos} geradoEm={geradoEm}>
-          {readme?.introHtml ? (
+      {/* A abertura da home é o README do acervo. Sem título nem texto nele, a
+          home vai direto da ilustração aos atalhos — o Criador tirou de propósito. */}
+      {readme?.introHtml ? (
+        <PageHead eyebrow="Acervo de um universo em construção" title={readme.title}>
+          <div className="pagehead__acoes">
+            <EditarLink path="README.md" />
+          </div>
+          <AlternarAtelie path="README.md" publicos={publicos} geradoEm={geradoEm}>
             <div className="pagehead__lede prose" dangerouslySetInnerHTML={{ __html: readme.introHtml }} />
-          ) : null}
-        </AlternarAtelie>
-      </PageHead>
+          </AlternarAtelie>
+        </PageHead>
+      ) : (
+        <div className="inicio__atelie">
+          <EditarLink path="README.md" />
+          <AlternarAtelie path="README.md" publicos={publicos} geradoEm={geradoEm}>
+            {null}
+          </AlternarAtelie>
+        </div>
+      )}
 
       <section className="entradas" aria-label="Por onde começar">
         <Link className="entrada entrada--destaque" href={ROTA_LINHA_DO_TEMPO}>
