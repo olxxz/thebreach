@@ -12,6 +12,7 @@ import { EditarLink } from '@/components/EditarLink';
 import { ContinuarLeitura } from '@/components/ContinuarLeitura';
 import { Recente } from '@/components/Recente';
 import { podeConterEntidades } from '@/lib/breach/slug';
+import { AlternarAtelie } from '@/components/atelie/AlternarAtelie';
 
 // O slug de um documento tem um trecho por pasta de entidade: uma espécie
 // dentro da classe vira `dragoes/dragao-barbado`. Daí a rota catch-all.
@@ -46,6 +47,7 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
     getVizinhosDeLeitura(doc.path),
   ]);
   const chegam = await getRelacoesQueChegam(doc.path);
+  const publicos = (await getCompendium()).docs.map((outro) => outro.path);
   if (doc.path === CAMINHO_LINHA_DO_TEMPO) return <PaginaDaLinhaDoTempo titulo={doc.title} intro={doc.introHtml} />;
   const eyebrow = doc.header.subtipo
     ? `${category.title} › ${doc.header.subtipo}`
@@ -86,7 +88,9 @@ export default async function DocPage({ params }: { params: Promise<Params> }) {
         </div>
       </PageHead>
       <Recente path={doc.path} geradoEm={geradoEm} />
-      <DocArticle doc={doc} backlinks={backlinks} eras={eras} chegam={chegam} />
+      <AlternarAtelie path={doc.path} publicos={publicos}>
+        <DocArticle doc={doc} backlinks={backlinks} eras={eras} chegam={chegam} />
+      </AlternarAtelie>
       {leitura ? <ContinuarLeitura {...leitura} /> : null}
     </div>
   );

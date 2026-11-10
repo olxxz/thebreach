@@ -1,5 +1,5 @@
 /**
- * O cofre do modo administrador: o token do GitHub cifrado por uma senha.
+ * O cofre do Ateliê: o token do GitHub cifrado por uma senha.
  *
  * O site é estático e não tem servidor que guarde segredo. O que dá para fazer
  * sem servidor é cifrar o token no navegador e publicar só o resultado: quem
@@ -69,7 +69,7 @@ export function documentoDoCofre(cofreJson: string): string {
   return [
     '# Cofre do editor',
     '',
-    'O token do modo administrador do site, cifrado pela senha do Criador. É gerado pelo próprio site; não se edita à mão. Apagar este arquivo desliga a entrada por senha.',
+    'O token do Ateliê do site, cifrado pela senha do Criador. É gerado pelo próprio site; não se edita à mão. Apagar este arquivo desliga a entrada por senha.',
     '',
     '```json',
     cofreJson,

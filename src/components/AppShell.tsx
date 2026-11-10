@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen, Castle, Github, History, Home, Hourglass, Images, Languages, Menu, PanelLeft,
-  PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2, Shield, ShieldCheck,
+  Feather, PanelRight, Pin, PinOff, Ruler, ScrollText, Search as SearchIcon, Share2,
   Stamp, Sun, Users, X,
 } from 'lucide-react';
 import type { SearchRecord } from '@/lib/breach/types';
@@ -28,7 +28,7 @@ interface Props {
   nav: NavCategory[];
   searchRecords: SearchRecord[];
   eras: Array<{ id: string; titulo: string }>;
-  /** O cofre do modo administrador publicado no acervo, quando há um. */
+  /** O cofre do Ateliê publicado no acervo, quando há um. */
   cofre: string | null;
   repoUrl: string;
   children: React.ReactNode;
@@ -57,7 +57,6 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
   const pathname = usePathname();
   const {
     theme, toggleTheme, nav: navMode, setNav, drawer, setDrawer, tools, toggleTools, admin,
-    soCanone, toggleCanone,
   } = useAppearance();
   const [search, setSearch] = useState(false);
   const [tokenDialog, setTokenDialog] = useState(false);
@@ -153,12 +152,11 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
           </Link>
 
           <div className="tools">
-            {soCanone ? (
-              <button type="button" className="tool tool--canone" onClick={toggleCanone} title="Mostrar tudo de novo">
-                <Stamp size={15} aria-hidden="true" />
-                <span>Só o cânone</span>
-                <X size={13} aria-hidden="true" />
-              </button>
+            {admin ? (
+              <Link className="tool tool--atelie" href="/atelie" title="Ir ao Ateliê: propostas e lacunas">
+                <Feather size={15} aria-hidden="true" />
+                <span>Ateliê</span>
+              </Link>
             ) : null}
             <button
               type="button"
@@ -174,7 +172,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
               type="button"
               className="tool tool--tools"
               onClick={() => (tools === 'open' ? toggleTools() : abrirFerramentas())}
-              aria-label={tools === 'open' ? 'Fechar as ferramentas' : 'Abrir as ferramentas'}
+              aria-label={tools === 'open' ? 'Fechar as configurações' : 'Abrir as configurações'}
               aria-expanded={tools === 'open'}
             >
               <PanelRight size={19} aria-hidden="true" />
@@ -189,16 +187,16 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
 
           Como a da esquerda, abre e fecha: recolhida é uma faixa de ícones,
           aberta mostra os rótulos. */}
-      <aside className="utilrail" ref={ferrRef} aria-label="Ferramentas do site">
+      <aside className="utilrail" ref={ferrRef} aria-label="Configurações do site">
         <div className="utilrail__bar">
-          <p className="utilrail__label">Ferramentas</p>
+          <p className="utilrail__label">Configurações</p>
           <button
             type="button"
             className="utilrail__chave"
             onClick={toggleTools}
             aria-expanded={tools === 'open'}
-            aria-label={tools === 'open' ? 'Recolher as ferramentas' : 'Abrir as ferramentas'}
-            title={tools === 'open' ? 'Recolher as ferramentas' : 'Abrir as ferramentas'}
+            aria-label={tools === 'open' ? 'Recolher as configurações' : 'Abrir as configurações'}
+            title={tools === 'open' ? 'Recolher as configurações' : 'Abrir as configurações'}
           >
             <PanelRight size={17} aria-hidden="true" />
           </button>
@@ -217,25 +215,20 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         <button
           type="button"
           className="utilrail__tool"
-          data-ativo={soCanone}
-          aria-pressed={soCanone}
-          onClick={toggleCanone}
-          title={soCanone ? 'Mostrar propostas e lacunas' : 'Ler só o que é cânone'}
-        >
-          <Stamp size={18} aria-hidden="true" />
-          <span className="utilrail__nome">{soCanone ? 'Só o cânone: ligado' : 'Só o cânone'}</span>
-        </button>
-        <button
-          type="button"
-          className="utilrail__tool"
           data-ativo={admin}
           onClick={() => setTokenDialog(true)}
-          aria-label="Modo administrador"
-          title="Modo administrador (Ctrl+Alt+A)"
+          aria-label={admin ? 'No Ateliê — sair ou trocar a senha' : 'Entrar no Ateliê'}
+          title="Ateliê (Ctrl+Alt+A)"
         >
-          {admin ? <ShieldCheck size={18} aria-hidden="true" /> : <Shield size={18} aria-hidden="true" />}
-          <span className="utilrail__nome">{admin ? 'Administrador' : 'Modo administrador'}</span>
+          <Feather size={18} aria-hidden="true" />
+          <span className="utilrail__nome">{admin ? 'No Ateliê' : 'Entrar no Ateliê'}</span>
         </button>
+        {admin ? (
+          <Link className="utilrail__tool" href="/atelie" title="Propostas, lacunas e documentos que o público não vê">
+            <Stamp size={18} aria-hidden="true" />
+            <span className="utilrail__nome">Abrir o Ateliê</span>
+          </Link>
+        ) : null}
         <a
           className="utilrail__tool"
           href={repoUrl}
@@ -253,7 +246,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
         <aside className="railnav" ref={navRef} data-open={drawer} aria-label="Categorias do acervo">
           <div className="railnav__bar">
             <button type="button" className="railnav__ferramentas" onClick={abrirFerramentas}>
-              <PanelRight size={15} aria-hidden="true" /> Tema e ferramentas
+              <PanelRight size={15} aria-hidden="true" /> Tema e configurações
             </button>
             <span className="railnav__label">Navegação</span>
             <button
@@ -373,7 +366,7 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
             ref={veuRef}
             className="scrim"
             data-visivel={drawer || tools === 'open'}
-            aria-label={drawer ? 'Fechar a navegação' : 'Fechar as ferramentas'}
+            aria-label={drawer ? 'Fechar a navegação' : 'Fechar as configurações'}
             onClick={() => {
               setDrawer(false);
               if (tools === 'open') toggleTools();

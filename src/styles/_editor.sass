@@ -1,6 +1,6 @@
 @use 'mixins' as *
 
-// --- Botão e link do modo administrador -----------------------------------
+// --- Botão e link do Ateliê -----------------------------------
 
 .utilrail__tool[data-ativo='true']
   color: var(--accent-ink)
@@ -30,6 +30,76 @@
   display: flex
   flex-wrap: wrap
   gap: var(--space-3)
+
+// --- Ateliê ----------------------------------------------------------------
+// A cor do Ateliê é a da proposta: é dela que ele é feito.
+
+.atelie__faixa
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: var(--space-2) var(--space-3)
+  margin: var(--space-3) 0 var(--space-5)
+  padding: var(--space-2) var(--space-3)
+  border: 1px dashed var(--m-proposta-bd)
+  border-radius: var(--radius-m)
+  background: var(--m-proposta-bg)
+  color: var(--m-proposta-fg)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+
+.atelie__conta
+  flex: 1 1 14rem
+
+.atelie__troca
+  display: inline-flex
+  border: 1px solid var(--m-proposta-bd)
+  border-radius: var(--radius-pill)
+  overflow: hidden
+
+  button
+    padding: var(--space-1) var(--space-3)
+    border: 0
+    background: transparent
+    color: inherit
+    font: inherit
+    cursor: pointer
+
+    &[aria-pressed='true']
+      background: var(--m-proposta-fg)
+      color: var(--paper-0)
+
+.atelie__aviso,
+.atelie__nota
+  color: var(--ink-4)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+
+.atelie__grupos
+  display: grid
+  gap: var(--space-6)
+
+.atelie__grupo
+  h2
+    margin: 0 0 var(--space-3)
+    font-size: var(--step-1)
+
+  ul
+    display: grid
+    gap: var(--space-2)
+    margin: 0
+    padding: 0
+    list-style: none
+
+  li
+    display: flex
+    flex-wrap: wrap
+    align-items: baseline
+    gap: var(--space-1) var(--space-3)
+
+  code
+    color: var(--ink-4)
+    font-size: var(--step--2)
 
 // --- Diálogo do token -------------------------------------------------------
 

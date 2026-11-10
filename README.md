@@ -31,9 +31,10 @@ Tudo em `src/lib/breach/`:
 
 | Arquivo | Papel |
 |---|---|
-| `source.ts` | Acesso bruto. API do GitHub (árvore + conteúdo) ou pasta local. Memoiza tudo. |
+| `source.ts` | Acesso ao acervo. API do GitHub (árvore + conteúdo) ou pasta local. Memoiza tudo e entrega só a versão pública. |
+| `publico.ts` | O corte do público: tira propostas, lacunas e o que só elas citam. |
 | `parse.ts` | Lê um documento: título, cabeçalho, texto de abertura, seções e subseções. |
-| `markers.ts` | Os seis marcadores de `CONVENCOES.md` §1, com contagem por documento. |
+| `markers.ts` | Os sete marcadores de `CONVENCOES.md` §1, com contagem por documento. |
 | `markdown.ts` | Pipeline markdown → HTML com as transformações próprias. |
 | `api.ts` | Consultas usadas pelas páginas: categorias, documentos, índice, alterações, busca. |
 | `slug.ts` | Caminho no repo → rota no site. |
@@ -66,6 +67,23 @@ lacuna declarada — não são escondidas. A distância entre o que está defini
 o que falta é conteúdo, como no acervo.
 
 ---
+
+## O público e o Ateliê
+
+O site publicado só tem o que é público (CONVENCOES.md §1 do acervo).
+`[PROPOSTA]` e `[LACUNA]` são do **Ateliê**: `src/lib/breach/publico.ts` os
+corta do markdown bruto já em `source.ts`, antes de qualquer outra camada, e o
+`scripts/baixar-imagens.mjs` não copia a mídia que só eles citam. A pasta
+`10-propostas/` inteira, e o que de `00-meta/` não é página, ficam de fora.
+Documento só de lacunas sai, a não ser que tenha filhos públicos.
+
+O Ateliê é o modo do Criador (a senha, ou o token, nas Configurações). Nele,
+cada página pública ganha uma faixa com a troca **Público / Ateliê**, que lê o
+documento inteiro do GitHub e o renderiza com o mesmo pipeline; e `/atelie`
+lista e abre os documentos que o público não vê. A mídia do Ateliê é buscada
+no acervo na hora, com o token.
+
+`[EM ABERTO]` é público: o que o Criador deixou aberto de propósito.
 
 ## O layout
 

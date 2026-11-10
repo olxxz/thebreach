@@ -583,32 +583,17 @@
 .railnav__linha[data-estado='atual'] .railnav__item--icone svg
   color: var(--accent-ink)
 
-// --- Só o cânone ----------------------------------------------------------
-// As propostas e as lacunas saem da leitura; o documento continua o mesmo.
-
-html[data-leitura='canone']
-  [data-camada='proposta'],
-  [data-camada='lacuna'],
-  .section--gap,
-  .section__sub:has(> .gapnote)
-    display: none
-
-  // Lista ou tabela em que nada sobrou some junto.
-  .prose ul:not(:has(> li:not([data-camada='proposta'], [data-camada='lacuna']))),
-  .prose ol:not(:has(> li:not([data-camada='proposta'], [data-camada='lacuna']))),
-  .md-table:not(:has(tbody tr:not([data-camada='proposta'], [data-camada='lacuna'])))
-    display: none
-
-.tool--canone
+.tool--atelie
   display: inline-flex
   align-items: center
   gap: var(--space-2)
   width: auto
   padding: 0 var(--space-3)
-  border: 1px solid var(--m-canonico-bd)
+  border: 1px solid var(--m-proposta-bd)
   border-radius: var(--radius-pill)
-  background: var(--m-canonico-bg)
-  color: var(--m-canonico-fg)
+  background: var(--m-proposta-bg)
+  color: var(--m-proposta-fg)
+  text-decoration: none
   font-family: var(--font-sans)
   font-size: var(--step--2)
   white-space: nowrap

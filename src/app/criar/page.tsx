@@ -49,9 +49,9 @@ function Criar() {
 
   if (!admin || !token) {
     return (
-      <PageHead eyebrow="Modo administrador" title="Documento novo">
+      <PageHead eyebrow="Ateliê" title="Documento novo">
         <p className="editor__estado">
-          Modo administrador desligado. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
+          Fora do Ateliê. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
           token e ativar.
         </p>
       </PageHead>
@@ -73,7 +73,7 @@ function Criar() {
   };
 
   return (
-    <PageHead eyebrow="Modo administrador" title="Documento novo">
+    <PageHead eyebrow="Ateliê" title="Documento novo">
       <div className="editor">
         {pasta ? (
           <p className="editor__dica">
@@ -106,7 +106,7 @@ function Criar() {
 
 export default function CriarPage() {
   return (
-    <Suspense fallback={<PageHead eyebrow="Modo administrador" title="Documento novo" />}>
+    <Suspense fallback={<PageHead eyebrow="Ateliê" title="Documento novo" />}>
       <Criar />
     </Suspense>
   );

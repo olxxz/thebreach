@@ -69,8 +69,6 @@ var f=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.tools)});
 if(f==='open'||f==='closed'){d.setAttribute('data-tools',f);}
 var a=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.admin)});
 if(a==='1'){d.setAttribute('data-admin','1');}
-var l=localStorage.getItem(${JSON.stringify(STORAGE_KEYS.leitura)});
-if(l==='canone'){d.setAttribute('data-leitura','canone');}
 }catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

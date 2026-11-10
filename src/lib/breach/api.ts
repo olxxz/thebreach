@@ -29,7 +29,7 @@ import { ilustracaoDe, pastaDe, urlDaImagem } from './imagens';
 import { labelFromPath, listItemsUnder, parseDocument, tableRows, tituloDe } from './parse';
 import { renderMarkdown, toPlainText, type Titulos } from './markdown';
 import { mergeTallies, tallyTotal } from './markers';
-import { hrefForPath, parseCategoryDir, slugify } from './slug';
+import { hrefForPath, normalizeDocPath, parseCategoryDir, slugify } from './slug';
 import { CAMINHO_LINHA_DO_TEMPO, erasPorDocumento, lerLinhaDoTempo } from './linhaDoTempo';
 import type { EraRef } from './linhaDoTempo';
 import type { Cartao } from './mundo';
@@ -256,7 +256,10 @@ async function build(): Promise<Compendium> {
 
   const indexRaw = raws.get(`${META_DIR}/INDICE-CANONICO.md`) ?? '';
   const changelogRaw = raws.get(`${META_DIR}/REGISTRO-DE-ALTERACOES.md`) ?? '';
-  const { entries, priorityGaps, contradictions } = parseCanonicalIndex(indexRaw);
+  const indice = parseCanonicalIndex(indexRaw);
+  const { priorityGaps, contradictions } = indice;
+  // Linha do índice cujo documento é do Ateliê não vai para o público.
+  const entries = indice.entries.filter((entry) => !entry.path || acervo.has(normalizeDocPath(entry.path)));
   const eras = await lerLinhaDoTempo(raws.get(CAMINHO_LINHA_DO_TEMPO) ?? '', titulos);
 
   const erasPorCaminho = Object.fromEntries(erasPorDocumento(eras));

@@ -14,6 +14,8 @@ import { readFile as fsReadFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { REPOSITORIO } from './repositorio';
+import { ehCaminhoDoAtelie, midiaCitada, paraPublico } from './publico';
+import { EXTENSOES, NOME_HERO, ehAudio, ehImagem, pastaDe } from './imagens';
 
 export const SOURCE = {
   owner: process.env.BREACH_OWNER ?? REPOSITORIO.owner,
@@ -81,14 +83,58 @@ async function request(url: string, accept?: string): Promise<string> {
 }
 
 let treeCache: Promise<string[]> | null = null;
+let publicCache: Promise<string[]> | null = null;
 
-/** Todos os arquivos do acervo, em ordem alfabética. */
-export function listRepoFiles(): Promise<string[]> {
+/** Todos os arquivos do acervo, inclusive os do Ateliê. Só para o build. */
+export function listAllRepoFiles(): Promise<string[]> {
   treeCache ??= usingLocal ? listLocal() : listRemote();
   return treeCache;
 }
 
-/** Apenas os documentos. */
+/**
+ * Os arquivos que o público vê, em ordem alfabética: os documentos que têm
+ * algo público e a mídia que eles citam, mais o `hero` de cada entidade
+ * pública. O resto é do Ateliê e não entra no site (ver `publico.ts`).
+ */
+export function listRepoFiles(): Promise<string[]> {
+  publicCache ??= listPublic();
+  return publicCache;
+}
+
+async function listPublic(): Promise<string[]> {
+  const todos = await listAllRepoFiles();
+  const existe = new Set(todos);
+  const ficam = new Set<string>();
+  const docsPublicos = new Set<string>();
+  for (const arquivo of todos) {
+    if (arquivo.endsWith('.md') && !(await readPublic(arquivo)).doAtelie) docsPublicos.add(arquivo);
+  }
+  // Uma entidade só de lacunas que tem filhos públicos fica, como moldura:
+  // sem ela a árvore e as migalhas dos filhos quebram.
+  for (const arquivo of todos) {
+    if (!/(^|\/)README\.md$/i.test(arquivo) || docsPublicos.has(arquivo) || ehCaminhoDoAtelie(arquivo)) continue;
+    const pasta = `${pastaDe(arquivo)}/`;
+    if ([...docsPublicos].some((doc) => doc !== arquivo && doc.startsWith(pasta))) docsPublicos.add(arquivo);
+  }
+  for (const arquivo of todos) {
+    if (!docsPublicos.has(arquivo)) continue;
+    const publico = await readPublic(arquivo);
+    ficam.add(arquivo);
+    for (const midia of midiaCitada(publico.texto, arquivo)) if (existe.has(midia)) ficam.add(midia);
+    if (/(^|\/)README\.md$/i.test(arquivo)) {
+      const pasta = pastaDe(arquivo);
+      for (const ext of EXTENSOES) {
+        const hero = `${pasta ? `${pasta}/` : ''}${NOME_HERO}.${ext}`;
+        if (existe.has(hero)) ficam.add(hero);
+      }
+    }
+  }
+  // Arquivos que não são documento nem mídia (folhas de referência, scripts)
+  // não interessam ao site.
+  return todos.filter((arquivo) => ficam.has(arquivo) && (arquivo.endsWith('.md') || ehImagem(arquivo) || ehAudio(arquivo)));
+}
+
+/** Apenas os documentos públicos. */
 export async function listMarkdownFiles(): Promise<string[]> {
   return (await listRepoFiles()).filter((file) => file.endsWith('.md'));
 }
@@ -128,9 +174,24 @@ async function listRemote(): Promise<string[]> {
 }
 
 const fileCache = new Map<string, Promise<string>>();
+const publicFileCache = new Map<string, Promise<ReturnType<typeof paraPublico>>>();
 
-/** Conteúdo bruto de um documento do acervo. */
-export function readMarkdown(filePath: string): Promise<string> {
+function readPublic(filePath: string): Promise<ReturnType<typeof paraPublico>> {
+  let pending = publicFileCache.get(filePath);
+  if (!pending) {
+    pending = readRaw(filePath).then((bruto) => paraPublico(bruto, filePath));
+    publicFileCache.set(filePath, pending);
+  }
+  return pending;
+}
+
+/** A versão pública de um documento: sem propostas nem lacunas. */
+export async function readMarkdown(filePath: string): Promise<string> {
+  return (await readPublic(filePath)).texto;
+}
+
+/** Conteúdo bruto de um documento do acervo, com tudo. Só para o build. */
+export function readRaw(filePath: string): Promise<string> {
   let pending = fileCache.get(filePath);
   if (!pending) {
     // A API de conteúdo, e não raw.githubusercontent, porque o acervo é privado.

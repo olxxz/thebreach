@@ -251,7 +251,7 @@ function Editor() {
 
   if (!path) {
     return (
-      <PageHead eyebrow="Modo administrador" title="Editar">
+      <PageHead eyebrow="Ateliê" title="Editar">
         <p className="editor__estado">
           Falta o documento: abra esta página a partir do link “Editar” de uma entidade.
         </p>
@@ -261,9 +261,9 @@ function Editor() {
 
   if (!admin || !token) {
     return (
-      <PageHead eyebrow="Modo administrador" title={path}>
+      <PageHead eyebrow="Ateliê" title={path}>
         <p className="editor__estado">
-          Modo administrador desligado. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
+          Fora do Ateliê. Aperte <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> para colar o
           token e ativar.
         </p>
       </PageHead>
@@ -480,7 +480,7 @@ function Editor() {
     : null;
 
   return (
-    <PageHead eyebrow="Modo administrador" title={path}>
+    <PageHead eyebrow="Ateliê" title={path}>
       <div className="editor">
         {estado === 'carregando' ? <p className="editor__estado">Carregando…</p> : null}
 
@@ -761,7 +761,7 @@ function Editor() {
 
 export default function EditarPage() {
   return (
-    <Suspense fallback={<PageHead eyebrow="Modo administrador" title="Editar" />}>
+    <Suspense fallback={<PageHead eyebrow="Ateliê" title="Editar" />}>
       <Editor />
     </Suspense>
   );

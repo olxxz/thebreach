@@ -28,6 +28,7 @@ import {
   resolverRefRelativa,
   resolverRelativo,
   withBase,
+  normalizeDocPath,
 } from './slug';
 
 /** Títulos dos documentos do acervo, pela rota do site — rótulo das referências. */
@@ -181,10 +182,18 @@ function rehypeDocLinks() {
         const caminho = resolverRefRelativa(pasta, href);
         if (!caminho) return;
         const route = hrefForPath(caminho);
+        // No build público, `titulos` só tem os documentos públicos: link para
+        // documento do Ateliê vira texto, em vez de levar a uma página que não existe.
+        if (route && titulos && !titulos.has(route)) {
+          node.tagName = 'span';
+          node.properties = { className: ['link-atelie'] };
+          return;
+        }
         if (route) {
           const hash = href.includes('#') ? href.slice(href.indexOf('#') + 1) : '';
           node.properties.href = withBase(route) + (hash ? `#${hash}` : '');
           node.properties.className = ['link-internal'];
+          node.properties['data-doc'] = caminho;
           rotularPeloTitulo(node, titulos?.get(route));
         }
         return;
@@ -201,11 +210,14 @@ function rehypeDocLinks() {
       // Com o título conhecido, a referência se lê como texto — "As seis
       // raças" em vez de `03-povos/seis-racas.md`; o caminho fica no `title`.
       const titulo = titulos?.get(route);
+      // Build público e documento fora dele (do Ateliê): fica o caminho, sem link.
+      if (titulos && !titulo) return;
+      const doc = normalizeDocPath(raw);
       (parent as Element).children[indexInParent] = titulo
-        ? element('a', { href: withBase(route), className: ['doc-ref', 'doc-ref--titulo'], title: raw }, [
+        ? element('a', { href: withBase(route), className: ['doc-ref', 'doc-ref--titulo'], title: raw, 'data-doc': doc }, [
             textNode(titulo),
           ])
-        : element('a', { href: withBase(route), className: ['doc-ref'] }, [
+        : element('a', { href: withBase(route), className: ['doc-ref'], 'data-doc': doc }, [
             element('code', {}, [textNode(raw)]),
           ]);
     });

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Pencil } from 'lucide-react';
 import { useAppearance } from './AppearanceProvider';
 
-/** Leva à edição de `path`. Só aparece com o modo administrador ligado. */
+/** Leva à edição de `path`. Só aparece com o Ateliê ligado. */
 export function EditarLink({ path }: { path: string }) {
   const { admin } = useAppearance();
   if (!admin) return null;

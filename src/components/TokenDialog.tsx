@@ -17,7 +17,7 @@ interface Props {
 const FOCAVEIS = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
- * Diálogo do token pessoal — a porta do modo administrador. Clona a casca de
+ * Diálogo do token pessoal — a porta do Ateliê. Clona a casca de
  * `SearchDialog`, mas corrige três buracos que o original tem: aqui o Escape
  * funciona com foco em qualquer parte do painel (não só no campo), o Tab fica
  * preso dentro do diálogo, e a rolagem do corpo trava enquanto ele está aberto.
@@ -149,7 +149,7 @@ export function TokenDialog({ open, onClose, cofre = null }: Props) {
         className="searchdialog__panel tokendialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Modo administrador"
+        aria-label="Ateliê"
         onKeyDown={onKeyDown}
       >
         {token ? (
@@ -200,13 +200,13 @@ export function TokenDialog({ open, onClose, cofre = null }: Props) {
               }}
             >
               <LogOut size={16} aria-hidden="true" />
-              Sair do modo administrador
+              Sair do Ateliê
             </button>
           </div>
         ) : cofre && !porToken ? (
           <form className="tokendialog__body" onSubmit={(event) => void entrarComSenha(event)}>
             <label className="tokendialog__rotulo" htmlFor="senha">
-              Senha do modo administrador
+              Senha do Ateliê
             </label>
             <input
               ref={inputRef}
@@ -248,7 +248,7 @@ export function TokenDialog({ open, onClose, cofre = null }: Props) {
               <code>Contents: Read and write</code>. Fica só neste navegador.
             </p>
             <button type="submit" className="tokendialog__ativar" disabled={!valor.trim()}>
-              Ativar modo administrador
+              Entrar no Ateliê
             </button>
           </form>
         )}

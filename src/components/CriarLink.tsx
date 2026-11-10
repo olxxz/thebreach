@@ -10,7 +10,7 @@ interface Props {
   rotulo?: string;
 }
 
-/** Abre a criação de um documento dentro desta entidade. Só no modo administrador. */
+/** Abre a criação de um documento dentro desta entidade. Só no Ateliê. */
 export function CriarLink({ pasta, rotulo = 'Criar documento aqui' }: Props) {
   const { admin } = useAppearance();
   if (!admin) return null;

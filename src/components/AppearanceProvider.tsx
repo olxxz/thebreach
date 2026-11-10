@@ -25,16 +25,13 @@ interface Appearance {
   /** `open`: a lateral direita mostra os rótulos ao lado dos ícones. */
   tools: ToolsMode;
   toggleTools: () => void;
-  /** `true`: só o que é cânone aparece — propostas e lacunas somem do texto. */
-  soCanone: boolean;
-  toggleCanone: () => void;
-  /** Modo administrador: mostra os links de edição pelo site. */
+  /** Ateliê: o modo do Criador — edição pelo site, propostas e lacunas. */
   admin: boolean;
   /** Token pessoal do GitHub, guardado no navegador. `null` quando não há um. */
   token: string | null;
-  /** Grava o token e liga o modo administrador. */
+  /** Grava o token e liga o Ateliê. */
   activate: (token: string) => void;
-  /** Apaga o token e desliga o modo administrador. */
+  /** Apaga o token e desliga o Ateliê. */
   deactivate: () => void;
 }
 
@@ -62,7 +59,6 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   const [tools, setToolsState] = useState<ToolsMode>(DEFAULT_TOOLS);
   const [drawer, setDrawer] = useState(false);
   const [admin, setAdmin] = useState(false);
-  const [soCanone, setSoCanone] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
   // Alinha o estado do React com o que o script inline já aplicou no <html>.
@@ -72,7 +68,6 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     if (isNavMode(root.dataset.nav)) setNavState(root.dataset.nav);
     if (isToolsMode(root.dataset.tools)) setToolsState(root.dataset.tools);
     if (root.dataset.admin === '1') setAdmin(true);
-    if (root.dataset.leitura === 'canone') setSoCanone(true);
     // O token nunca passa pelo script bloqueante: só é lido aqui, depois da
     // primeira pintura.
     try {
@@ -106,19 +101,6 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
-  const toggleCanone = useCallback(() => {
-    setSoCanone((atual) => {
-      const novo = !atual;
-      if (novo) {
-        document.documentElement.dataset.leitura = 'canone';
-        remember(STORAGE_KEYS.leitura, 'canone');
-      } else {
-        delete document.documentElement.dataset.leitura;
-        forget(STORAGE_KEYS.leitura);
-      }
-      return novo;
-    });
-  }, []);
 
   const activate = useCallback((next: string) => {
     setToken(next);
@@ -146,14 +128,12 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
       setDrawer,
       tools,
       toggleTools,
-      soCanone,
-      toggleCanone,
       admin,
       token,
       activate,
       deactivate,
     }),
-    [theme, toggleTheme, nav, setNav, drawer, tools, toggleTools, soCanone, toggleCanone, admin, token, activate, deactivate],
+    [theme, toggleTheme, nav, setNav, drawer, tools, toggleTools, admin, token, activate, deactivate],
   );
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;

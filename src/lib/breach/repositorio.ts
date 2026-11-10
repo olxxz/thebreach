@@ -1,6 +1,6 @@
 /**
  * Onde mora o acervo. Fonte única para o build (que pode sobrescrever por
- * variável de ambiente, em `source.ts`) e para o navegador (modo administrador
+ * variável de ambiente, em `source.ts`) e para o navegador (Ateliê
  * e textos da interface).
  */
 export const REPOSITORIO = {
