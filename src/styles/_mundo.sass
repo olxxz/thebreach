@@ -6,33 +6,58 @@
 .filtros
   display: flex
   flex-wrap: wrap
-  gap: var(--space-2)
+  align-items: center
+  gap: 0.4rem
 
   & + &
     margin-top: var(--space-2)
 
+  // No celular os filtros são uma linha só, que rola de lado: empilhados em
+  // três linhas eles empurravam o conteúdo para fora da tela.
+  @include until(48rem)
+    flex-wrap: nowrap
+    overflow-x: auto
+    scrollbar-width: none
+    margin-inline: calc(-1 * var(--space-4))
+    padding-inline: var(--space-4)
+    mask-image: linear-gradient(to right, transparent 0, #000 1rem, #000 calc(100% - 1.6rem), transparent 100%)
+
+    &::-webkit-scrollbar
+      display: none
+
 .filtro
+  flex: none
   display: inline-flex
   align-items: center
   gap: var(--space-2)
-  padding: 0.3rem 0.8rem
-  border: 1px solid var(--border)
+  padding: 0.28rem 0.75rem
+  border: 1px solid transparent
   border-radius: var(--radius-pill)
-  background: transparent
+  background: color-mix(in srgb, var(--paper-3) 55%, transparent)
   color: var(--fg-muted)
   font-family: var(--font-sans)
-  font-size: var(--step--1)
+  font-size: var(--step--2)
+  line-height: 1.5
   cursor: pointer
   white-space: nowrap
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease)
 
-  &:hover
+  &:hover:not(:disabled)
     color: var(--fg)
-    border-color: var(--line-strong)
+    background: var(--paper-3)
+
+  &:disabled
+    opacity: 0.45
+    cursor: default
 
   &[aria-pressed='true']
-    background: var(--accent-soft)
-    border-color: color-mix(in srgb, var(--accent) 50%, var(--border))
-    color: var(--accent-ink)
+    background: var(--accent)
+    border-color: var(--accent)
+    color: var(--paper-0)
+
+    &:hover
+      background: var(--accent-ink)
+      color: var(--paper-0)
 
 .filtro--solto
   margin-left: auto
@@ -47,9 +72,13 @@
     opacity: 0.35
 
   &[aria-pressed='true']
-    background: transparent
+    background: color-mix(in srgb, var(--card-accent) 14%, transparent)
     color: var(--fg)
     border-color: color-mix(in srgb, var(--card-accent) 60%, var(--border))
+
+    &:hover
+      background: color-mix(in srgb, var(--card-accent) 22%, transparent)
+      color: var(--fg)
 
     &::before
       opacity: 1
@@ -109,8 +138,12 @@
   display: flex
   gap: var(--space-4)
   overflow-x: auto
-  padding-bottom: var(--space-2)
+  // Folga em volta: a rolagem lateral corta o que sai da caixa, e o retrato
+  // sobe e ganha sombra quando o ponteiro passa.
+  padding: 0.6rem 0.5rem 1.2rem
+  margin: -0.6rem -0.5rem 0
   scroll-snap-type: x proximity
+  scrollbar-width: thin
   --retrato-w: clamp(8.5rem, 22vw, 11rem)
 
 .fileira--grande
@@ -585,45 +618,108 @@ html[data-leitura='canone']
       @include visually-hidden
 
 // --- Barra inferior do celular --------------------------------------------
+// No celular ela é a navegação: o cabeçalho some e o que ele tinha — busca,
+// menu, ferramentas — passa a morar aqui e na gaveta do acervo.
 
-.barra
+.barra, .railnav__ferramentas
   display: none
 
 @include until(48rem)
-  .barra
-    position: fixed
-    inset: auto 0 0 0
-    z-index: 40
-    display: grid
-    grid-template-columns: repeat(5, 1fr)
-    padding-bottom: env(safe-area-inset-bottom)
-    border-top: 1px solid var(--border)
-    background: color-mix(in srgb, var(--paper-1) 94%, transparent)
-    backdrop-filter: blur(10px)
+  .masthead
+    display: none
 
-  .barra__item
-    display: flex
-    flex-direction: column
+  .railnav__ferramentas
+    display: inline-flex
     align-items: center
-    gap: 2px
-    padding: 0.5rem 0 0.4rem
-    border: 0
+    gap: var(--space-2)
+    margin-right: auto
+    padding: 0.35rem 0.7rem
+    border: 1px solid var(--border)
+    border-radius: var(--radius-pill)
     background: transparent
     color: var(--fg-muted)
     font-family: var(--font-sans)
-    font-size: 0.66rem
+    font-size: var(--step--2)
+
+  .railnav__bar .railnav__label, .railnav__pin
+    display: none
+
+  .barra
+    --aba: 20%
+    position: fixed
+    inset: auto 0 0 0
+    z-index: 70
+    display: grid
+    grid-template-columns: repeat(5, 1fr)
+    padding: 0.45rem 0.4rem calc(0.45rem + env(safe-area-inset-bottom))
+    border-top: 1px solid var(--border)
+    background: color-mix(in srgb, var(--paper-1) 92%, transparent)
+    backdrop-filter: blur(14px) saturate(1.2)
+
+  // O círculo da aba atual. Uma peça só, que desliza: é o movimento que diz
+  // de onde se veio e para onde se foi.
+  .barra__marca
+    position: absolute
+    top: 0.45rem
+    left: 0.4rem
+    width: calc((100% - 0.8rem) / 5)
+    height: 2.5rem
+    display: grid
+    place-items: center
+    transform: translateX(calc(var(--barra-i, 0) * 100%))
+    transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1)
+    pointer-events: none
+
+    &::before
+      content: ''
+      width: 3.4rem
+      height: 2.5rem
+      border-radius: var(--radius-pill)
+      background: var(--accent-soft)
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent)
+
+  .barra__item
+    position: relative
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 0.3rem
+    padding: 0
+    border: 0
+    background: transparent
+    color: var(--ink-4)
+    font-family: var(--font-sans)
+    font-size: 0.7rem
+    letter-spacing: 0.01em
     text-decoration: none
     cursor: pointer
+    -webkit-tap-highlight-color: transparent
+    transition: color 0.25s var(--ease)
 
-    &[aria-current='page']
+    svg
+      height: 2.5rem
+      transition: transform 0.3s var(--ease)
+
+    &[data-ativa='true']
       color: var(--accent-ink)
+      font-weight: 600
 
-  .barra__item--busca svg
-    color: var(--accent-ink)
+      svg
+        transform: scale(1.08)
 
-  // O rodapé e o conteúdo não podem ficar atrás da barra.
+  // As gavetas e o conteúdo terminam acima da barra.
+  .railnav, .utilrail
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom))
+
   .colophon
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom))
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom))
+
+  .main
+    padding-top: var(--space-5)
+
+@media (prefers-reduced-motion: reduce)
+  .barra__marca
+    transition: none
 
 // --- Continuar a leitura --------------------------------------------------
 
@@ -718,7 +814,7 @@ html[data-leitura='canone']
 .vitrine
   display: grid
   gap: var(--space-4)
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr))
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr))
 
 .vitrine__item
   display: flex
@@ -771,3 +867,62 @@ html[data-leitura='canone']
     &:hover, &:focus-visible
       color: var(--fg)
       border-color: color-mix(in srgb, var(--accent) 55%, var(--border))
+
+.searchdialog__eras
+  margin-inline: 0
+
+// --- Início enxuto --------------------------------------------------------
+
+.indice
+  list-style: none
+  margin: 0
+  padding: 0
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr))
+  column-gap: var(--space-6)
+
+  a
+    display: flex
+    align-items: baseline
+    gap: var(--space-3)
+    padding: 0.55rem 0
+    border-bottom: 1px solid var(--border)
+    color: inherit
+    text-decoration: none
+
+    &:hover .indice__nome, &:focus-visible .indice__nome
+      color: var(--accent-ink)
+
+.indice__num
+  font-family: var(--font-num, var(--font-mono))
+  font-size: var(--step--1)
+  color: var(--accent-ink)
+
+.indice__nome
+  font-family: var(--font-heading)
+  font-size: var(--step-1)
+
+.indice__conta
+  margin-left: auto
+  font-family: var(--font-mono)
+  font-size: var(--step--2)
+  color: var(--ink-4)
+
+// No celular as três portas viram linhas, não cartões altos.
+@include until(40rem)
+  .entradas
+    gap: var(--space-2)
+
+  .entrada
+    display: grid
+    grid-template-columns: auto 1fr
+    column-gap: var(--space-3)
+    row-gap: 0
+    align-items: center
+    padding: var(--space-3) var(--space-4)
+
+    svg
+      grid-row: span 2
+
+  .inicio
+    gap: var(--space-6)

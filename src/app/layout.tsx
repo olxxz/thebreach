@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Fraunces, Inter, Spectral } from 'next/font/google';
 import { AppearanceProvider } from '@/components/AppearanceProvider';
 import { AppShell, type NavCategory, type NavDoc } from '@/components/AppShell';
@@ -36,6 +36,9 @@ const spectral = Spectral({
   variable: '--font-spectral',
   display: 'swap',
 });
+
+/** `cover`: é o que deixa a barra inferior respeitar a faixa de gesto do iPhone. */
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export const metadata: Metadata = {
   title: {

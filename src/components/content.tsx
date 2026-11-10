@@ -311,7 +311,6 @@ export function DocArticle({
               <span>{era.titulo}</span>
             </Link>
           ))}
-          {doc.header.classificacao ? <Chip label="Classificação" value={doc.header.classificacao} /> : null}
           {doc.header.status ? <Chip label="Status" value={doc.header.status} status /> : null}
           {doc.header.fontesInternas.length > 0 ? (
             <Chip label="Fontes internas" value={doc.header.fontesInternas.join(', ')} />

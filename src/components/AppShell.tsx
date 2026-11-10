@@ -109,6 +109,21 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
     setDrawer(false);
   };
 
+  // A aba da barra inferior em que se está. O que não é início, reinos nem
+  // personagens mora no acervo.
+  const aqui = pathname.replace(/\/+$/, '') || '/';
+  const abaAtiva = search
+    ? 2
+    : drawer
+      ? 4
+      : aqui === '/'
+        ? 0
+        : aqui.startsWith('/reinos')
+          ? 1
+          : aqui.startsWith('/personagens')
+            ? 3
+            : 4;
+
   return (
     <div className="app">
       <a className="skip-link" href="#conteudo">
@@ -237,6 +252,9 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
       <div className="frame">
         <aside className="railnav" ref={navRef} data-open={drawer} aria-label="Categorias do acervo">
           <div className="railnav__bar">
+            <button type="button" className="railnav__ferramentas" onClick={abrirFerramentas}>
+              <PanelRight size={15} aria-hidden="true" /> Tema e ferramentas
+            </button>
             <span className="railnav__label">Navegação</span>
             <button
               type="button"
@@ -404,33 +422,33 @@ export function AppShell({ nav, searchRecords, eras, cofre, repoUrl, children }:
       </footer>
 
       {/* No celular, o que mais se usa fica ao alcance do polegar. */}
-      <nav className="barra" aria-label="Atalhos">
-        <Link className="barra__item" href="/" aria-current={pathname === '/' ? 'page' : undefined}>
-          <Home size={19} aria-hidden="true" />
+      <nav className="barra" aria-label="Atalhos" style={{ ['--barra-i' as string]: abaAtiva }}>
+        {/* A marca da aba em que se está: desliza de uma para a outra. */}
+        <span className="barra__marca" aria-hidden="true" />
+        <Link className="barra__item" href="/" data-ativa={abaAtiva === 0}>
+          <Home size={22} aria-hidden="true" />
           <span>Início</span>
         </Link>
-        <Link
-          className="barra__item"
-          href="/reinos"
-          aria-current={estadoDe(pathname, '/reinos') === 'atual' ? 'page' : undefined}
-        >
-          <Castle size={19} aria-hidden="true" />
+        <Link className="barra__item" href="/reinos" data-ativa={abaAtiva === 1}>
+          <Castle size={22} aria-hidden="true" />
           <span>Reinos</span>
         </Link>
-        <button type="button" className="barra__item barra__item--busca" onClick={abrirBusca}>
-          <SearchIcon size={19} aria-hidden="true" />
+        <button type="button" className="barra__item" data-ativa={abaAtiva === 2} onClick={abrirBusca}>
+          <SearchIcon size={22} aria-hidden="true" />
           <span>Buscar</span>
         </button>
-        <Link
-          className="barra__item"
-          href="/personagens"
-          aria-current={estadoDe(pathname, '/personagens') === 'atual' ? 'page' : undefined}
-        >
-          <Users size={19} aria-hidden="true" />
+        <Link className="barra__item" href="/personagens" data-ativa={abaAtiva === 3}>
+          <Users size={22} aria-hidden="true" />
           <span>Personagens</span>
         </Link>
-        <button type="button" className="barra__item" onClick={abrirNavegacao} aria-expanded={drawer}>
-          <Menu size={19} aria-hidden="true" />
+        <button
+          type="button"
+          className="barra__item"
+          data-ativa={abaAtiva === 4}
+          onClick={() => (drawer ? setDrawer(false) : abrirNavegacao())}
+          aria-expanded={drawer}
+        >
+          <Menu size={22} aria-hidden="true" />
           <span>Acervo</span>
         </button>
       </nav>

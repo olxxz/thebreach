@@ -3,8 +3,7 @@ import {
   ArrowRight, BookOpen, Castle, History, Hourglass, Images, Languages, Share2, Users,
 } from 'lucide-react';
 import { getCompendium } from '@/lib/breach/api';
-import { CategoryCard, Hero, MarkerLegend, PageHead } from '@/components/content';
-import { FaixaDeEras } from '@/components/LinhaDoTempo';
+import { Hero, PageHead } from '@/components/content';
 import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 
 /**
@@ -15,7 +14,7 @@ import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
  */
 export default async function HomePage() {
   const compendium = await getCompendium();
-  const { stats, readme, eras, reinos, personagens } = compendium;
+  const { readme, reinos, personagens } = compendium;
   const ultima = compendium.changelog[0];
 
   return (
@@ -34,35 +33,19 @@ export default async function HomePage() {
         <Link className="entrada entrada--destaque" href={ROTA_LINHA_DO_TEMPO}>
           <Hourglass size={20} aria-hidden="true" />
           <span className="entrada__titulo">Ler em ordem</span>
-          <span className="entrada__texto">A linha do tempo, da criação à segunda era, com os documentos de cada era.</span>
+          <span className="entrada__texto">Da criação à segunda era.</span>
         </Link>
         <Link className="entrada" href="/reinos">
           <Castle size={20} aria-hidden="true" />
           <span className="entrada__titulo">Por reino</span>
-          <span className="entrada__texto">
-            {reinos.map((reino) => reino.title).join(', ')}: quem governa, os lugares e os segredos de cada um.
-          </span>
+          <span className="entrada__texto">{reinos.map((reino) => reino.title).join(' · ')}</span>
         </Link>
         <Link className="entrada" href="/personagens">
           <Users size={20} aria-hidden="true" />
           <span className="entrada__titulo">Por personagem</span>
-          <span className="entrada__texto">
-            Os {personagens.length} Nefandos e Deviantes com rosto no acervo, lado a lado.
-          </span>
+          <span className="entrada__texto">{personagens.length} Nefandos e Deviantes, lado a lado.</span>
         </Link>
       </section>
-
-      {eras.length > 0 ? (
-        <section id="eras">
-          <div className="section-title">
-            <h2>As eras</h2>
-            <Link href={ROTA_LINHA_DO_TEMPO}>
-              linha do tempo <ArrowRight size={13} aria-hidden="true" />
-            </Link>
-          </div>
-          <FaixaDeEras eras={eras} />
-        </section>
-      ) : null}
 
       {reinos.length > 0 ? (
         <section id="reinos">
@@ -106,11 +89,17 @@ export default async function HomePage() {
         <div className="section-title">
           <h2>Categorias</h2>
         </div>
-        <div className="grid">
+        <ul className="indice">
           {compendium.categories.map((category) => (
-            <CategoryCard key={category.slug} category={category} />
+            <li key={category.slug}>
+              <Link href={`/c/${category.slug}`}>
+                <span className="indice__num">{category.number}</span>
+                <span className="indice__nome">{category.title}</span>
+                <span className="indice__conta">{category.docs.length || '—'}</span>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       {ultima ? (
@@ -122,20 +111,6 @@ export default async function HomePage() {
         </Link>
       ) : null}
 
-      <details className="panel leitura">
-        <summary>Como ler os marcadores</summary>
-        <p className="card__text panel__lede">
-          Toda afirmação traz a camada de onde vem: o que é verdade no mundo e o que os povos acreditam. Sem marcador,
-          a afirmação não conta como documentada. As regras completas estão nas{' '}
-          <Link href="/convencoes">convenções</Link>.
-        </p>
-        <MarkerLegend />
-      </details>
-
-      <p className="inicio__rodape">
-        {stats.docs} documentos · {stats.categories} categorias · {stats.markers.CANONICO ?? 0} afirmações canônicas
-        {stats.updatedAt ? ` · atualizado em ${stats.updatedAt}` : ''}
-      </p>
     </div>
   );
 }
