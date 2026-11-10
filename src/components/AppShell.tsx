@@ -19,7 +19,6 @@ import { Chave, NavDocs } from './nav/NavDocs';
 import { useArvoreAberta } from '@/hooks/useArvoreAberta';
 import { useArrastoGavetas } from '@/hooks/useArrastoGavetas';
 import { useAtalhos } from '@/hooks/useAtalhos';
-import { NOME_REPOSITORIO } from '@/lib/breach/repositorio';
 import { ROTA_LINHA_DO_TEMPO } from '@/lib/breach/rotas';
 import { useGravados } from '@/hooks/useGravados';
 import { tituloDoGravado } from '@/lib/breach/recentes';
@@ -58,7 +57,6 @@ const META = [
   { href: '/convencoes', label: 'Convenções', Icone: Ruler },
 ];
 
-const MAIN_LINKS = [...EXPLORAR, ...META];
 
 export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, repoUrl, children }: Props) {
   const pathname = usePathname();
@@ -129,6 +127,22 @@ export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, 
     ativo: estreito, drawer, tools, toggleTools, setDrawer,
   });
 
+  // O cabeçalho sai do caminho ao descer a página e volta ao subir: na
+  // leitura ele só ocupa espaço; quando a mão sobe, é porque quer ir a outro lugar.
+  const [cabecalhoOculto, setCabecalhoOculto] = useState(false);
+  useEffect(() => {
+    let ultimo = window.scrollY;
+    const onScroll = (): void => {
+      const agora = window.scrollY;
+      if (Math.abs(agora - ultimo) < 8) return;
+      setCabecalhoOculto(agora > 96 && agora > ultimo);
+      ultimo = agora;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => setCabecalhoOculto(false), [pathname]);
+
   const abrirBusca = useCallback(() => setSearch(true), []);
   const abrirAcesso = useCallback(() => setTokenDialog(true), []);
   useAtalhos(abrirBusca, abrirAcesso);
@@ -163,8 +177,16 @@ export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, 
             ? 3
             : 4;
 
+  // O editor ocupa a tela inteira, com a própria barra; as relações também,
+  // com os painéis por cima do desenho.
+  const modoDaPagina = aqui.startsWith('/editar') || aqui.startsWith('/criar')
+    ? 'editor'
+    : aqui.startsWith('/relacoes')
+      ? 'tela'
+      : 'leitura';
+
   return (
-    <div className="app">
+    <div className="app" data-modo={modoDaPagina} data-cabecalho={cabecalhoOculto ? 'oculto' : 'visivel'}>
       <a className="skip-link" href="#conteudo">
         Ir para o conteúdo
       </a>
@@ -436,40 +458,6 @@ export function AppShell({ nav, searchRecords, eras, cofre, geradoEm, publicos, 
         </main>
       </div>
 
-      <footer className="colophon">
-        <div className="colophon__inner">
-          <div>
-            <p className="colophon__title">Compêndio Breach</p>
-            <p>
-              Representação visual do acervo. Todo o conteúdo vem do repositório{' '}
-              <a href={repoUrl} target="_blank" rel="noreferrer noopener">
-                {NOME_REPOSITORIO}
-              </a>
-              , lido como banco de dados durante a publicação.
-            </p>
-          </div>
-          <div>
-            <p className="colophon__title">Navegar</p>
-            <ul className="colophon__list">
-              {MAIN_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href}>{link.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="colophon__title">Categorias</p>
-            <ul className="colophon__list">
-              {nav.slice(0, 5).map((category) => (
-                <li key={category.slug}>
-                  <Link href={`/c/${category.slug}`}>{category.title}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </footer>
 
       {/* No celular, o que mais se usa fica ao alcance do polegar. */}
       <nav className="barra" aria-label="Atalhos" style={{ ['--barra-i' as string]: abaAtiva }}>

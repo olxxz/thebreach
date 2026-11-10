@@ -1,0 +1,469 @@
+@use 'mixins' as *
+
+// ---------------------------------------------------------------------------
+// Enxuto: menos casca, mais página.
+//
+// Carregado por último. O cabeçalho fica mais baixo e sai do caminho ao descer
+// a página; não há rodapé; a coluna perde o respiro que não lia nada. Dois
+// modos tomam a tela inteira: o editor (com a própria barra) e as relações
+// (o desenho por baixo, os painéis por cima).
+// ---------------------------------------------------------------------------
+
+// --- Cabeçalho mais baixo, que se esconde ao descer -------------------------
+
+.masthead
+  transition: transform 0.25s var(--ease)
+
+.app[data-cabecalho='oculto'] .masthead
+  transform: translateY(-100%)
+
+.masthead__inner
+  padding-block: var(--space-2)
+
+// --- Menos respiro inútil -------------------------------------------------
+
+.main
+  padding-block: var(--space-5) var(--space-7)
+
+.pagehead
+  margin-bottom: var(--space-5)
+
+.hero
+  margin-bottom: var(--space-4)
+
+.hero__art
+  max-height: min(30rem, 52vh)
+
+.railnav
+  padding: var(--space-3) var(--space-4) var(--space-6)
+
+// --- Modo editor: a página inteira é o editor -----------------------------
+
+.app[data-modo='editor']
+  padding-left: 0 !important
+
+  .masthead,
+  .railnav,
+  .utilrail,
+  .barra,
+  .skip-link
+    display: none
+
+  .frame
+    max-width: none
+    padding: 0
+
+  .main
+    max-width: none
+    padding: 0
+
+.editorpage
+  --barra-h: 3.25rem
+  min-height: 100dvh
+  display: flex
+  flex-direction: column
+  background: var(--bg-app)
+
+  // A barra de formatação do editor visual gruda logo abaixo da barra do editor.
+  .ed-barra
+    top: var(--barra-h)
+
+.editorbar
+  position: sticky
+  top: 0
+  z-index: 50
+  min-height: var(--barra-h)
+  box-sizing: border-box
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: var(--space-2) var(--space-4)
+  padding: var(--space-2) var(--space-4)
+  border-bottom: 1px solid var(--border)
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent)
+  backdrop-filter: blur(12px)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+
+.editorbar__voltar
+  display: inline-flex
+  align-items: center
+  gap: var(--space-2)
+  min-width: 0
+  flex: 1 1 12rem
+  color: var(--fg)
+  text-decoration: none
+
+  &:hover
+    color: var(--accent-ink)
+
+.editorbar__titulo
+  display: flex
+  flex-direction: column
+  min-width: 0
+  font-family: var(--font-display)
+  font-size: var(--step-1)
+  line-height: 1.1
+
+  code
+    font-family: var(--font-mono)
+    font-size: 0.7rem
+    color: var(--fg-muted)
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+.editorbar__grupo
+  display: inline-flex
+  border: 1px solid var(--border)
+  border-radius: var(--radius-pill)
+  overflow: hidden
+
+.editorbar__modo
+  min-height: 2.25rem
+  padding: 0 var(--space-3)
+  border: 0
+  background: transparent
+  color: var(--fg)
+  font: inherit
+  cursor: pointer
+
+  &[aria-pressed='true']
+    background: var(--accent-soft)
+    color: var(--accent-ink)
+    font-weight: 500
+
+.editorbar__acoes
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: var(--space-1)
+
+.editorbar__botao,
+.editorbar__gravar,
+.editorbar__fechar
+  display: inline-flex
+  align-items: center
+  gap: var(--space-2)
+  min-height: 2.25rem
+  padding: 0 var(--space-3)
+  border: 1px solid transparent
+  border-radius: var(--radius-pill)
+  background: transparent
+  color: var(--fg)
+  font: inherit
+  cursor: pointer
+
+  &:hover:not(:disabled)
+    border-color: var(--border)
+
+  &:disabled
+    opacity: 0.45
+    cursor: default
+
+.editorbar__botao[aria-pressed='true']
+  border-color: var(--border)
+  background: var(--accent-soft)
+  color: var(--accent-ink)
+
+// Em tela estreita os botões ficam só no ícone: os rótulos vão para o `title`.
+@include until(52rem)
+  .editorbar__botao span
+    @include visually-hidden
+
+.editorbar__gravar
+  background: var(--accent)
+  color: var(--paper-0)
+  font-weight: 500
+
+  &:hover:not(:disabled)
+    background: var(--accent-ink)
+    border-color: transparent
+
+.editorbar__fechar
+  padding: 0
+  width: 2.25rem
+  justify-content: center
+
+.editorpage__aviso
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: var(--space-2) var(--space-3)
+  margin: 0
+  padding: var(--space-2) var(--space-4)
+  border-bottom: 1px solid var(--border)
+  background: var(--bg-surface)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  color: var(--fg-muted)
+
+.editorpage__aviso--erro
+  color: var(--m-disputado-fg)
+  background: var(--m-disputado-bg)
+
+.editorpage__aviso--feito
+  color: var(--m-atestado-fg)
+  background: var(--m-atestado-bg)
+
+.editorpage__corpo
+  flex: 1
+  display: flex
+  align-items: stretch
+  min-height: 0
+
+.editorpage__folha
+  flex: 1 1 auto
+  min-width: 0
+  padding: var(--space-4) clamp(var(--space-4), 4vw, var(--space-7)) var(--space-7)
+
+  // No modo markdown, a área e a prévia ocupam a altura da janela.
+  .editor__area,
+  .previa__folha
+    min-height: calc(100dvh - var(--barra-h) - 6rem)
+    max-height: calc(100dvh - var(--barra-h) - 3rem)
+
+.editorpage__ficha
+  margin-bottom: var(--space-4)
+
+.editorpage__painel
+  flex: 0 0 min(24rem, 100%)
+  max-height: calc(100dvh - var(--barra-h))
+  position: sticky
+  top: var(--barra-h)
+  overflow-y: auto
+  border-left: 1px solid var(--border)
+  background: var(--bg-surface)
+
+  @include until(52rem)
+    position: fixed
+    inset: var(--barra-h) 0 0 auto
+    width: min(24rem, 92vw)
+    z-index: 45
+    box-shadow: var(--shadow-l)
+
+.editorpage__painel-topo
+  position: sticky
+  top: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4)
+  border-bottom: 1px solid var(--border)
+  background: var(--bg-surface)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  font-weight: 500
+
+  p
+    margin: 0
+
+.explicacao
+  margin: 0 0 var(--space-3)
+  padding-left: 1.1rem
+  display: grid
+  gap: var(--space-1)
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  color: var(--fg)
+
+// --- Janela de gravar ------------------------------------------------------
+
+.gravardialog
+  width: min(46rem, 100%)
+  max-height: min(90dvh, 52rem)
+  display: flex
+  flex-direction: column
+
+.gravardialog__topo
+  display: flex
+  align-items: center
+  justify-content: space-between
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5)
+  border-bottom: 1px solid var(--border)
+
+.gravardialog__titulo
+  margin: 0
+  font-family: var(--font-display)
+  font-size: var(--step-2)
+
+.gravardialog__corpo
+  flex: 1
+  overflow-y: auto
+  display: flex
+  flex-direction: column
+  gap: var(--space-4)
+  padding: var(--space-4) var(--space-5)
+
+.gravardialog__rotulo
+  margin: 0 0 var(--space-2)
+  font-family: var(--font-sans)
+  font-size: var(--step--2)
+  font-weight: 500
+  letter-spacing: 0.14em
+  text-transform: uppercase
+  color: var(--fg-muted)
+
+.gravardialog__linhas summary
+  cursor: pointer
+  font-family: var(--font-sans)
+  font-size: var(--step--1)
+  color: var(--accent-ink)
+
+.gravardialog__acoes
+  display: flex
+  justify-content: flex-end
+  flex-wrap: wrap
+  gap: var(--space-2)
+  padding: var(--space-3) var(--space-5)
+  border-top: 1px solid var(--border)
+
+// --- Modo tela: as relações tomam a página --------------------------------
+
+.app[data-modo='tela']
+  .frame
+    max-width: none
+    padding: 0
+
+  .main
+    max-width: none
+    padding: 0
+
+.tela
+  position: relative
+  height: calc(100dvh - 3.4rem)
+  min-height: 32rem
+
+  @include until(48rem)
+    height: calc(100dvh - 4.5rem)
+
+.tela .grafo
+  position: absolute
+  inset: 0
+  display: block
+
+.tela .grafo__bancada
+  position: absolute
+  inset: 0
+  margin: 0
+  display: block
+
+.tela .grafo__quadro
+  position: absolute
+  inset: 0
+  border: 0
+  border-radius: 0
+  background: var(--paper-2)
+
+  > svg
+    width: 100%
+    height: 100%
+    min-height: 0
+
+.tela .grafo__filtros,
+.tela .grafo__painel
+  position: absolute
+  z-index: 5
+  box-sizing: border-box
+  overflow-y: auto
+  padding: var(--space-4)
+  border: 1px solid var(--border)
+  border-radius: 10px
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent)
+  box-shadow: var(--shadow-m)
+
+.tela .grafo__filtros
+  top: var(--space-4)
+  left: var(--space-4)
+  width: min(17rem, calc(100% - 2rem))
+  max-height: calc(100% - 2rem)
+  display: flex
+  flex-direction: column
+  gap: var(--space-2)
+
+  .filtros
+    gap: var(--space-1)
+
+.tela .grafo__nome
+  margin: 0
+  font-size: var(--step-2)
+
+.tela .grafo__painel
+  top: var(--space-4)
+  right: var(--space-4)
+  width: min(20rem, calc(100% - 2rem))
+  max-height: calc(100% - 2rem)
+
+// No celular, os filtros encolhem no alto e o painel só sobe de baixo quando
+// um ponto é tocado.
+@include until(48rem)
+  .tela .grafo__filtros
+    top: var(--space-2)
+    left: var(--space-2)
+    right: var(--space-2)
+    width: auto
+    max-height: 34%
+    padding: var(--space-3)
+
+    > .grafo__dica
+      display: none
+
+  .tela .grafo__painel[data-escolhido='nao']
+    display: none
+
+  .tela .grafo__zoom
+    left: auto
+    right: var(--space-3)
+    bottom: var(--space-3)
+
+  .tela .grafo__painel
+    top: auto
+    bottom: 0
+    right: 0
+    left: 0
+    width: auto
+    max-height: 45%
+    border-radius: 14px 14px 0 0
+
+.tela .grafo__zoom
+  z-index: 6
+  right: auto
+  left: var(--space-4)
+  bottom: var(--space-4)
+
+// --- Barra lateral mais densa ----------------------------------------------
+// Os grupos ficam mais próximos e os itens de "Explorar" deixam o versalete
+// de título: são atalhos, não capítulos.
+
+.railnav__group + .railnav__group
+  margin-top: var(--space-4)
+
+.railnav__title
+  font-size: var(--step--1)
+  margin-bottom: var(--space-1)
+
+.railnav__item
+  padding-block: 0.35rem
+  font-size: var(--step-0)
+
+.railnav__item--icone
+  font-family: var(--font-sans)
+  font-variant: normal
+  font-size: var(--step--1)
+  letter-spacing: 0
+
+// --- Documento: menos fôlego entre o cabeçalho e o texto ------------------
+
+.doc__gauge
+  margin-bottom: var(--space-4)
+
+.doc__intro
+  margin-bottom: var(--space-4)
+
+.toc
+  top: 4rem
+
+@include until(48rem)
+  .tela .grafo__zoom
+    left: auto
+    right: var(--space-3)
